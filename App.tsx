@@ -1,20 +1,35 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar'
+import { useState } from 'react'
+import { SafeAreaView, StyleSheet } from 'react-native'
+import { ConnectionBanner } from './src/components/ConnectionBanner'
+import { Tabs } from './src/components/Tabs'
+import { useVanBus } from './src/hooks/useVanBus'
+import { colors } from './src/theme'
+import { PowerTab } from './src/tabs/PowerTab'
+import { SwitchesTab } from './src/tabs/SwitchesTab'
+import { TanksTab } from './src/tabs/TanksTab'
 
 export default function App() {
+  const { state, status } = useVanBus()
+  const [activeTab, setActiveTab] = useState('tanks')
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+    <SafeAreaView style={styles.page}>
+      <StatusBar style="light" />
+      <ConnectionBanner status={status} />
+      <Tabs
+        activeId={activeTab}
+        onSelect={setActiveTab}
+        tabs={[
+          { id: 'tanks', label: 'Tanks', content: <TanksTab tanks={state.tanks} /> },
+          { id: 'power', label: 'Power', content: <PowerTab batteries={state.batteries} /> },
+          { id: 'switches', label: 'Switches', content: <SwitchesTab relays={state.relays} /> },
+        ]}
+      />
+    </SafeAreaView>
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+  page: { flex: 1, backgroundColor: colors.bg },
+})

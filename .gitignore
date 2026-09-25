@@ -39,3 +39,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Local env overrides (EXPO_PUBLIC_MQTT_WS_URL/credentials)
+.env
