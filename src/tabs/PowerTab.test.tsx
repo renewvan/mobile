@@ -28,3 +28,20 @@ test('shows an empty state with no batteries', async () => {
   await render(<PowerTab batteries={{}} />)
   expect(screen.getByText('No battery data yet.')).toBeTruthy()
 })
+
+test('skips a still-partial battery record instead of crashing', async () => {
+  // MQTT builds an entity up one property per retained message; a
+  // `health`-topic collision or a mid-flight connection can leave an id
+  // with only some fields set. Rendering must not throw on the missing
+  // ones (e.g. `undefined.toFixed`).
+  await render(
+    <PowerTab
+      batteries={{
+        ...fixtureBatteries,
+        health: { soc_pct: 0 } as unknown as (typeof fixtureBatteries)['house'],
+      }}
+    />,
+  )
+  expect(screen.getByText('Battery (house)')).toBeTruthy()
+  expect(screen.queryByText('Battery (health)')).toBeNull()
+})

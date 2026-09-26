@@ -3,14 +3,14 @@ import { useState } from 'react'
 import { SafeAreaView, StyleSheet } from 'react-native'
 import { ConnectionBanner } from './src/components/ConnectionBanner'
 import { Tabs } from './src/components/Tabs'
-import { useVanBus } from './src/hooks/useVanBus'
+import { useRenewvanBus } from './src/hooks/useRenewvanBus'
 import { colors } from './src/theme'
 import { PowerTab } from './src/tabs/PowerTab'
 import { SwitchesTab } from './src/tabs/SwitchesTab'
 import { TanksTab } from './src/tabs/TanksTab'
 
 export default function App() {
-  const { state, status } = useVanBus()
+  const { state, status } = useRenewvanBus()
   const [activeTab, setActiveTab] = useState('tanks')
 
   return (

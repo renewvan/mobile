@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import mqtt, { type MqttClient } from 'mqtt'
-import { emptyVanBusState, type VanBusState } from '../types'
+import { emptyRenewvanBusState, type RenewvanBusState } from '../types'
 
-// Client-side MQTT-over-WebSocket connection to the van bus broker
+// Client-side MQTT-over-WebSocket connection to the renewvan bus broker
 // (Mosquitto's WS listener), per
 // hub/.scratch/renewvan-hub-v0-build/issues/07-dashboard-phone-app.md — no
 // polling backend, not offline-first. This is the thin adapter half of the
@@ -12,14 +12,14 @@ import { emptyVanBusState, type VanBusState } from '../types'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 
-export interface VanBus {
-  state: VanBusState
+export interface RenewvanBus {
+  state: RenewvanBusState
   status: ConnectionStatus
 }
 
-const TOPIC_PATTERN = /^van\/(tank|relay|battery)\/([^/]+)\/([^/]+)$/
+const TOPIC_PATTERN = /^renewvan\/(tank|relay|battery)\/([^/]+)\/([^/]+)$/
 
-function applyMessage(prev: VanBusState, topic: string, payload: string): VanBusState {
+function applyMessage(prev: RenewvanBusState, topic: string, payload: string): RenewvanBusState {
   const match = TOPIC_PATTERN.exec(topic)
   if (!match) return prev
   const [, domain, id, property] = match
@@ -28,7 +28,7 @@ function applyMessage(prev: VanBusState, topic: string, payload: string): VanBus
     const value = property === 'fluid_type' || property === 'status' ? payload : Number(payload)
     return {
       ...prev,
-      tanks: { ...prev.tanks, [id]: { ...prev.tanks[id], [property]: value } as VanBusState['tanks'][string] },
+      tanks: { ...prev.tanks, [id]: { ...prev.tanks[id], [property]: value } as RenewvanBusState['tanks'][string] },
     }
   }
   if (domain === 'battery') {
@@ -37,7 +37,7 @@ function applyMessage(prev: VanBusState, topic: string, payload: string): VanBus
       ...prev,
       batteries: {
         ...prev.batteries,
-        [id]: { ...prev.batteries[id], [property]: value } as VanBusState['batteries'][string],
+        [id]: { ...prev.batteries[id], [property]: value } as RenewvanBusState['batteries'][string],
       },
     }
   }
@@ -49,7 +49,7 @@ function applyMessage(prev: VanBusState, topic: string, payload: string): VanBus
 }
 
 /**
- * Subscribes to `van/#` over MQTT-over-WebSocket and exposes the
+ * Subscribes to `renewvan/#` over MQTT-over-WebSocket and exposes the
  * accumulated retained state plus connection status. Env-configured via
  * `EXPO_PUBLIC_MQTT_WS_URL` (required), `EXPO_PUBLIC_MQTT_USERNAME`/
  * `EXPO_PUBLIC_MQTT_PASSWORD` (read-scoped credentials, optional while the
@@ -57,12 +57,12 @@ function applyMessage(prev: VanBusState, topic: string, payload: string): VanBus
  * var convention (docs.expo.dev/guides/environment-variables), same role
  * as the dashboard's `VITE_*` vars.
  */
-export function useVanBus(): VanBus {
+export function useRenewvanBus(): RenewvanBus {
   // Statically referenced (not destructured) so Expo's Metro config
   // inlines it at build time — see docs.expo.dev/guides/environment-variables.
   const wsUrl = process.env.EXPO_PUBLIC_MQTT_WS_URL
 
-  const [state, setState] = useState<VanBusState>(emptyVanBusState)
+  const [state, setState] = useState<RenewvanBusState>(emptyRenewvanBusState)
   // No URL configured is a known-at-mount-time terminal state, not
   // something to reach via a synchronous setState in the effect body
   // below (react-hooks/set-state-in-effect) — derive it as the initial
@@ -82,7 +82,7 @@ export function useVanBus(): VanBus {
 
     client.on('connect', () => {
       setStatus('connected')
-      client.subscribe('van/#')
+      client.subscribe('renewvan/#')
     })
     client.on('reconnect', () => setStatus('connecting'))
     client.on('close', () => setStatus('disconnected'))

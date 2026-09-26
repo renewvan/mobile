@@ -1,6 +1,6 @@
 # mobile
 
-Read-only React Native (Expo) phone app for the renewvan hub's van bus —
+Read-only React Native (Expo) phone app for the renewvan hub's renewvan bus —
 the same live tank/relay/battery view as `renewvan/dashboard`, checkable
 from outside the van without a browser. Per
 `hub/.scratch/renewvan-hub-v0-build/issues/07-dashboard-phone-app.md`.
@@ -10,11 +10,11 @@ only the same visual/interaction language (domain tabs, radial gauges,
 read-only relay list), independently reimplemented with React Native
 primitives (`react-native-svg` instead of CSS, etc.).
 
-Connects **directly** to the van bus broker over MQTT-over-WebSocket
+Connects **directly** to the renewvan bus broker over MQTT-over-WebSocket
 (Mosquitto's WS listener) from the phone — no polling backend, not
 offline-first. A dropped connection renders a clear "disconnected"
 banner, distinguishable from legitimate last-known-state values (every
-van-bus topic is retained, so a fresh connection shows real state
+renewvan-bus topic is retained, so a fresh connection shows real state
 immediately, not a blank screen).
 
 ## Layout
@@ -30,15 +30,15 @@ dashboard:
 
 ## Architecture
 
-- `src/hooks/useVanBus.ts` — the adapter: owns the MQTT client, subscribes
-  `van/#`, accumulates retained messages into a `VanBusState`, exposes
+- `src/hooks/useRenewvanBus.ts` — the adapter: owns the MQTT client, subscribes
+  `renewvan/#`, accumulates retained messages into a `RenewvanBusState`, exposes
   connection status. Not unit-tested (thin wrapper around `mqtt.js`), per
   the v0 spec's Testing Decisions.
 - `src/components/*` — presentational components (`RadialGauge`,
   `RelayRow`, `Tabs`, `ConnectionBanner`), each unit-tested against fixed
   props matching the v0.1 schema shapes (`hub/schema/*.schema.json`).
 - `src/tabs/*` — per-domain composition of the presentational components
-  over `VanBusState`, also unit-tested against fixture entity maps.
+  over `RenewvanBusState`, also unit-tested against fixture entity maps.
 - `src/config/relayLabels.ts` — app-side `id → label` map for the
   Switches tab (label is presentation-only, not a wire field).
 - A custom in-screen `Tabs` component switches panels — not Expo Router:
@@ -107,9 +107,9 @@ time, not read at runtime.
 Automated tests cover the presentational layer only. Before relying on
 this outside the van, verify against real hardware/broker (ticket 07
 item 6 — not verifiable from this environment: no physical phone,
-simulator, or reachable van-bus broker here):
+simulator, or reachable renewvan-bus broker here):
 
-- Install on a physical phone (or simulator) against the real van bus;
+- Install on a physical phone (or simulator) against the real renewvan bus;
   confirm both wired tanks, the house battery, and all 8 relay channels
   render live data once `tank`/`battery`/`relay` upstream components are
   publishing.

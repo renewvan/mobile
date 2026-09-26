@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native'
-import type { ConnectionStatus } from '../hooks/useVanBus'
+import type { ConnectionStatus } from '../hooks/useRenewvanBus'
 import { colors } from '../theme'
 
 export interface ConnectionBannerProps {
@@ -7,8 +7,8 @@ export interface ConnectionBannerProps {
 }
 
 const COPY: Record<ConnectionStatus, string> = {
-  connected: 'van bus connected',
-  connecting: 'connecting to van bus…',
+  connected: 'renewvan bus connected',
+  connecting: 'connecting to renewvan bus…',
   disconnected: 'disconnected — showing last-known state',
 }
 

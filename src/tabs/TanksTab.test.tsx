@@ -24,3 +24,18 @@ test('shows an empty state with no tanks', async () => {
   await render(<TanksTab tanks={{}} />)
   expect(screen.getByText('No tank data yet.')).toBeTruthy()
 })
+
+test('skips a still-partial tank record instead of rendering garbage', async () => {
+  // MQTT builds an entity up one property per retained message; a
+  // `health`-topic collision or a mid-flight connection can leave an id
+  // with only some fields set.
+  await render(
+    <TanksTab
+      tanks={{
+        ...fixtureTanks,
+        health: { status: 'ok' } as unknown as (typeof fixtureTanks)['fresh'],
+      }}
+    />,
+  )
+  expect(screen.getAllByTestId('radial-gauge')).toHaveLength(2)
+})

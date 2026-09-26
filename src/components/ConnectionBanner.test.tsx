@@ -3,12 +3,12 @@ import { ConnectionBanner } from './ConnectionBanner'
 
 test('shows connected copy', async () => {
   await render(<ConnectionBanner status="connected" />)
-  expect(screen.getByText('van bus connected')).toBeTruthy()
+  expect(screen.getByText('renewvan bus connected')).toBeTruthy()
 })
 
 test('shows connecting copy', async () => {
   await render(<ConnectionBanner status="connecting" />)
-  expect(screen.getByText('connecting to van bus…')).toBeTruthy()
+  expect(screen.getByText('connecting to renewvan bus…')).toBeTruthy()
 })
 
 test('shows disconnected copy, distinct from live/last-known state', async () => {
