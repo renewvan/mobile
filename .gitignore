@@ -42,3 +42,9 @@ yarn-error.*
 
 # Local env overrides (EXPO_PUBLIC_MQTT_WS_URL/credentials)
 .env
+
+# Shared editor config (format-on-save, recommended extensions) -- tracked
+# despite a machine-level global .gitignore blanket-ignoring .vscode/, so
+# the whole team gets the same settings.
+!.vscode/settings.json
+!.vscode/extensions.json

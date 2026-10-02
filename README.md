@@ -22,10 +22,10 @@ immediately, not a blank screen).
 Three domain tabs, one screen, same tabbed interaction as the web
 dashboard:
 
-| Tab | Content |
-|---|---|
-| Tanks | Radial gauge per tank (`level_pct`), liters-remaining readout, sensor-fault status in place of the readout when `status != ok` |
-| Power | Radial gauge per battery (`soc_pct`), voltage/current/power/temperature readout, `charge_state` badge |
+| Tab      | Content                                                                                                                                    |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tanks    | Radial gauge per tank (`level_pct`), liters-remaining readout, sensor-fault status in place of the readout when `status != ok`             |
+| Power    | Radial gauge per battery (`soc_pct`), voltage/current/power/temperature readout, `charge_state` badge                                      |
 | Switches | One row per relay: app-side `id → label` mapping + on/off indicator — **read-only**, no tap-to-toggle (`relay` has no command topic in v0) |
 
 ## Architecture
@@ -59,11 +59,11 @@ All config is Expo build-time-inlined `EXPO_PUBLIC_*` env vars (see
 `.env.example` and
 [docs.expo.dev/guides/environment-variables](https://docs.expo.dev/guides/environment-variables/)):
 
-| Variable | Default | Notes |
-|---|---|---|
-| `EXPO_PUBLIC_MQTT_WS_URL` | _(required)_ | Mosquitto's WS listener, phone-reachable, e.g. `ws://<host>:9001` |
-| `EXPO_PUBLIC_MQTT_USERNAME` / `EXPO_PUBLIC_MQTT_PASSWORD` | _(none)_ | Read-scoped credentials; blank while the broker allows anonymous access |
-| `EXPO_PUBLIC_RELAY_LABELS` | _(built-in defaults)_ | JSON `id -> label` override for the Switches tab |
+| Variable                                                  | Default               | Notes                                                                   |
+| --------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------- |
+| `EXPO_PUBLIC_MQTT_WS_URL`                                 | _(required)_          | Mosquitto's WS listener, phone-reachable, e.g. `ws://<host>:9001`       |
+| `EXPO_PUBLIC_MQTT_USERNAME` / `EXPO_PUBLIC_MQTT_PASSWORD` | _(none)_              | Read-scoped credentials; blank while the broker allows anonymous access |
+| `EXPO_PUBLIC_RELAY_LABELS`                                | _(built-in defaults)_ | JSON `id -> label` override for the Switches tab                        |
 
 ## Running
 

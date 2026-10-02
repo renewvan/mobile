@@ -17,7 +17,14 @@ test('signs positive current with a leading +', async () => {
   await render(
     <PowerTab
       batteries={{
-        house: { soc_pct: 90, voltage_v: 13.5, current_a: 5.2, power_w: 70, temperature_c: 20, charge_state: 'bulk' },
+        house: {
+          soc_pct: 90,
+          voltage_v: 13.5,
+          current_a: 5.2,
+          power_w: 70,
+          temperature_c: 20,
+          charge_state: 'bulk',
+        },
       }}
     />,
   )

@@ -53,7 +53,13 @@ export function Tabs({ tabs, activeId, onSelect }: TabsProps) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   bar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.border },
-  tab: { flex: 1, paddingVertical: 14, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tab: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
   tabActive: { borderBottomColor: colors.accent },
   tabLabel: { color: colors.textDim, fontSize: 15, fontWeight: '600' },
   tabLabelActive: { color: colors.text },

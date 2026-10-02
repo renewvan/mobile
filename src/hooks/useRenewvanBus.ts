@@ -28,7 +28,10 @@ function applyMessage(prev: RenewvanBusState, topic: string, payload: string): R
     const value = property === 'fluid_type' || property === 'status' ? payload : Number(payload)
     return {
       ...prev,
-      tanks: { ...prev.tanks, [id]: { ...prev.tanks[id], [property]: value } as RenewvanBusState['tanks'][string] },
+      tanks: {
+        ...prev.tanks,
+        [id]: { ...prev.tanks[id], [property]: value } as RenewvanBusState['tanks'][string],
+      },
     }
   }
   if (domain === 'battery') {
