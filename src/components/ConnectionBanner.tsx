@@ -19,9 +19,8 @@ const DOT_COLOR: Record<ConnectionStatus, string> = {
 }
 
 /**
- * Distinguishes a live connection from stale last-known-state values, per
- * hub/.scratch/renewvan-hub-v0-build/issues/07-dashboard-phone-app.md
- * ("surfaces disconnected rather than a silent blank/stale screen").
+ * Distinguishes a live connection from stale last-known-state values: it
+ * surfaces disconnected rather than a silent blank/stale screen.
  */
 export function ConnectionBanner({ status }: ConnectionBannerProps) {
   return (

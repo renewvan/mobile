@@ -2,8 +2,7 @@
 
 Read-only React Native (Expo) phone app for the renewvan hub's renewvan bus —
 the same live tank/relay/battery view as `renewvan/dashboard`, checkable
-from outside the van without a browser. Per
-`hub/.scratch/renewvan-hub-v0-build/issues/07-dashboard-phone-app.md`.
+from outside the van without a browser.
 
 Separate codebase from `renewvan/dashboard` — no shared frontend code,
 only the same visual/interaction language (domain tabs, radial gauges,

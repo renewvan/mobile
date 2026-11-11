@@ -8,8 +8,7 @@ export interface RelayRowProps {
 
 /**
  * A single read-only relay row: label + on/off indicator. No tap-to-toggle
- * — `relay` has no command topic in v0
- * (hub/.scratch/renewvan-hub-v0-build/issues/07-dashboard-phone-app.md).
+ * — `relay` has no command topic in v0.
  */
 export function RelayRow({ label, state }: RelayRowProps) {
   return (

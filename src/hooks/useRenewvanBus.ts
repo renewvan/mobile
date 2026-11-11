@@ -3,10 +3,9 @@ import mqtt, { type MqttClient } from 'mqtt'
 import { emptyRenewvanBusState, type RenewvanBusState } from '../types'
 
 // Client-side MQTT-over-WebSocket connection to the renewvan bus broker
-// (Mosquitto's WS listener), per
-// hub/.scratch/renewvan-hub-v0-build/issues/07-dashboard-phone-app.md — no
+// (Mosquitto's WS listener): no
 // polling backend, not offline-first. This is the thin adapter half of the
-// ticket's seam: it owns the live connection and is intentionally not
+// seam: it owns the live connection and is intentionally not
 // unit-tested (see hub spec Testing Decisions); the presentational
 // components it feeds are tested separately against fixed props.
 
