@@ -1,7 +1,6 @@
 // Dashboard-side `id -> human label` mapping for relay rows. `relay` has no
 // label field on the wire (schema/relay.schema.json is `{ state: bool }`
-// only) — the label is presentation-only, per
-// hub/.scratch/renewvan-hub-v0-build/issues/07-dashboard-phone-app.md.
+// only) — the label is presentation-only.
 //
 // Override via EXPO_PUBLIC_RELAY_LABELS, a JSON object of `id -> label`.
 // Any id published on the bus without an entry falls back to its raw id so

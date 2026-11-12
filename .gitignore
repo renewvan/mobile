@@ -48,3 +48,6 @@ yarn-error.*
 # the whole team gets the same settings.
 !.vscode/settings.json
 !.vscode/extensions.json
+
+# Local scratch notes; never committed
+.scratch/
