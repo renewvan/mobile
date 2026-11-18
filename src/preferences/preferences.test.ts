@@ -89,13 +89,13 @@ describe('alertsEnabled', () => {
 
 describe('layoutAfterDrop', () => {
   const layout = ['temperature', 'map', 'energy'] as const
-  // slots: temperature, map, energy, divider, heater, solar, tilt, fresh-water, grey-water
+  // slots: temperature, map, energy, divider, battery, heater, solar, tilt, fresh-water, grey-water
   it('reorders within the shown widgets', () => {
     expect(layoutAfterDrop(layout, 0, 2)).toEqual(['map', 'energy', 'temperature'])
   })
 
   it('shows a hidden widget dropped above the divider, at that place', () => {
-    expect(layoutAfterDrop(layout, 4, 1)).toEqual(['temperature', 'heater', 'map', 'energy'])
+    expect(layoutAfterDrop(layout, 5, 1)).toEqual(['temperature', 'heater', 'map', 'energy'])
   })
 
   it('hides a shown widget dropped below the divider', () => {

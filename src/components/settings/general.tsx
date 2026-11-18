@@ -63,7 +63,6 @@ import { useSettingsData } from './useSettingsData'
 
 export function GeneralView() {
   const { demoMode, commands } = useSettingsData()
-  const { alertsEnabled } = usePreferences()
   return (
     <>
       <Group title="Preferences">
@@ -71,16 +70,6 @@ export function GeneralView() {
           label="Display & Appearance"
           description="Theme, widgets, pages"
           onPress={() => openSettings('display')}
-        />
-        <NavRow
-          label="Dashboard"
-          description="Screen power, brightness, auto-sleep"
-          onPress={() => openSettings('kiosk')}
-        />
-        <NavRow
-          label="Alerts"
-          description={alertsEnabled ? 'Notifications on' : 'Notifications off'}
-          onPress={() => openSettings('alerts')}
         />
       </Group>
       <Group title="System">
@@ -138,6 +127,14 @@ export function AlertsView() {
             then switch this on again.
           </Note>
         )}
+      </Group>
+      <Group title="Log">
+        <NavRow
+          label="Alert log"
+          description="Open and resolved alerts"
+          attention={openCount > 0}
+          onPress={() => router.push('/alerts')}
+        />
       </Group>
     </>
   )

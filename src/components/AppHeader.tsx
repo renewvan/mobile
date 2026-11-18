@@ -1,6 +1,6 @@
 import { router } from 'expo-router'
-import { Bell, Settings, Wifi, WifiOff } from 'lucide-react-native'
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Settings2 } from 'lucide-react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
@@ -9,13 +9,15 @@ import { LogoLockup } from './Logo'
 
 /**
  * The bar above every tab, as the dashboard's header: the renewvan lockup, the DEMO badge while
- * the shared Demo mode is on, how the bus connection is doing, and the way into Settings.
+ * the shared Demo mode is on, and the way into Settings. The button carries a dot while an alert is
+ * open or the van is out of reach; Settings shows the dot on the row that needs a look.
  */
 export function AppHeader() {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const { status, demoMode } = useRenewvanBus()
   const { openCount } = useAlerts()
+  const attention = openCount > 0 || status === 'disconnected'
 
   return (
     <View
@@ -35,45 +37,16 @@ export function AppHeader() {
             <Text style={[styles.demoText, { color: colors.warningForeground }]}>DEMO</Text>
           </View>
         ) : null}
-        <View
-          accessibilityRole="text"
-          accessibilityLabel={`Connection: ${status}`}
-          style={styles.status}
-        >
-          {status === 'connected' ? (
-            <Wifi size={20} color={colors.success} />
-          ) : status === 'connecting' ? (
-            <ActivityIndicator size="small" color={colors.muted} />
-          ) : (
-            <WifiOff size={20} color={colors.danger} />
-          )}
-        </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={openCount > 0 ? `Alerts, ${openCount} active` : 'Alerts'}
-          android_ripple={{ color: colors.default, borderless: true, radius: 22 }}
-          hitSlop={8}
-          onPress={() => router.push('/alerts')}
-          style={styles.menu}
-        >
-          <Bell size={22} color={openCount > 0 ? colors.danger : colors.foreground} />
-          {openCount > 0 ? (
-            <View style={[styles.badge, { backgroundColor: colors.danger }]}>
-              <Text style={[styles.badgeText, { color: colors.dangerForeground }]}>
-                {openCount > 9 ? '9+' : openCount}
-              </Text>
-            </View>
-          ) : null}
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Settings"
+          accessibilityLabel={attention ? 'Settings, needs attention' : 'Settings'}
           android_ripple={{ color: colors.default, borderless: true, radius: 22 }}
           hitSlop={8}
           onPress={() => router.push('/settings')}
           style={styles.menu}
         >
-          <Settings size={22} color={colors.foreground} />
+          <Settings2 size={22} color={colors.foreground} />
+          {attention ? <View style={[styles.dot, { backgroundColor: colors.danger }]} /> : null}
         </Pressable>
       </View>
     </View>
@@ -92,18 +65,13 @@ const styles = StyleSheet.create({
   right: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   demo: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
   demoText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-  status: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   menu: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  badge: {
+  dot: {
     position: 'absolute',
-    top: -2,
-    right: -4,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    paddingHorizontal: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
+    top: 2,
+    right: 2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
-  badgeText: { fontSize: 10, fontWeight: '700' },
 })

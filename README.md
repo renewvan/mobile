@@ -18,7 +18,7 @@ design (every control has a plain React Native fallback), but iOS has not been r
 
 ## What it does
 
-Five tabs, in the platform's own tab bar (the alert bell and Settings gear sit in the header):
+Five tabs, in the platform's own tab bar (the Settings button sits in the header):
 
 | Tab     | Content                                                                                                                                                                                                 |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -52,8 +52,8 @@ unavailable" until it signs out and in again. A broker connection has no hub to 
 
 ### Alerts
 
-The dashboard's alert log: the bell in the header (red, with a count, while any alert is open)
-opens the list, newest first. Alerts come from the bus, never from a threshold of the app's own:
+The dashboard's alert log: Settings › Alerts › Alert log (the header's Settings button and the Alerts row carry a red dot while any
+alert is open) is the list, newest first. Alerts come from the bus, never from a threshold of the app's own:
 a tank whose `alarm_state` is `alarm`, a low starter battery, a lost hub connection and a
 Tailscale that is down. One opens when its condition starts and resolves when it ends; the row
 stays, marked Resolved. Any alert can be deleted, by sliding it left or by its ✕; Clear resolved
@@ -63,7 +63,7 @@ dashboard's, and is forgotten on sign-out (another van's alerts are not this one
 raises none of its own and leaves the real van's alerts as they were.
 
 Each new alert is also a system notification (channel "Alerts"; tapping it opens the list), and
-Settings › General › Alerts switches that off. Muting only stops the notifications: the log still
+Settings › Alerts switches that off. Muting only stops the notifications: the log still
 records. The first alert asks the phone for permission, as does switching the setting back on.
 
 These are **local** notifications: the app posts them while its process is alive and connected to
@@ -81,12 +81,12 @@ The dashboard's Settings tree, for a phone:
 | Devices                        | Every Driver and what it publishes, by driver or by entity. Tanks (readings, icon), temperature sensors (name, unit, icon), relays (name, icon, group), the heater (controls switch, sensor), batteries with BMS details and the Primary battery, solar chargers, chargers, GPS with satellite signal, tilt (set level, reset) |
 | General                        | Firmware versions, About, the shared Demo mode switch                                                                                                                                                                                                                                                                          |
 | General › Display & Appearance | The app's theme, the Start tab's widgets (which, and in what order), the power diagram's layout (Van tiles or Van orbs), which sensors the Climate tab shows, and the Relays page's groups (add, rename, reorder, remove, order the relays inside one)                                                                         |
-| General › Alerts               | Whether a new alert is posted as a notification on this phone, and the way to the alert list                                                                                                                                                                                                                                   |
-| General › Dashboard            | The van's touchscreen from anywhere: sleep or wake it, brightness, auto-sleep and its timeout                                                                                                                                                                                                                                  |
+| Alerts                         | Whether a new alert is posted as a notification on this phone, and the way to the alert list                                                                                                                                                                                                                                   |
+| Dashboard                      | The van's touchscreen from anywhere: sleep or wake it, brightness, auto-sleep and its timeout                                                                                                                                                                                                                                  |
 | Connectivity                   | The cellular router's signal and data use, the bus link and hub, Tailscale                                                                                                                                                                                                                                                     |
 | Van                            | The vehicle's details                                                                                                                                                                                                                                                                                                          |
 | Map                            | The full map: the van's position on the hub's offline basemap, with fix, satellites, speed and heading                                                                                                                                                                                                                         |
-| Connection                     | Which van this phone is signed in to, and signing out                                                                                                                                                                                                                                                                          |
+| Connection                     | Which van this phone is signed in to, and signing out (a red dot on the row while the van is out of reach)                                                                                                                                                                                                                     |
 
 Two kinds of setting live there, and the screens say which is which:
 

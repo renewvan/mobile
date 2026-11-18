@@ -180,6 +180,7 @@ export function NavRow({
   description,
   tone,
   dim,
+  attention,
   onPress,
 }: {
   icon?: ReactNode
@@ -189,13 +190,17 @@ export function NavRow({
   tone?: StatusTone
   /** Greyed: an offline Driver. */
   dim?: boolean
+  /** A notification dot at the right: something behind this row needs a look (an open alert, a lost link). */
+  attention?: boolean
   onPress: () => void
 }) {
   const { colors } = useTheme()
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={description ? `${label}, ${description}` : label}
+      accessibilityLabel={[label, description, attention && 'needs attention']
+        .filter(Boolean)
+        .join(', ')}
       android_ripple={{ color: colors.default }}
       onPress={onPress}
       style={[
@@ -218,6 +223,7 @@ export function NavRow({
           </View>
         ) : null}
       </View>
+      {attention ? <View style={[styles.dot, { backgroundColor: colors.danger }]} /> : null}
       <ChevronRight size={18} color={colors.muted} />
     </Pressable>
   )
