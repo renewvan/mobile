@@ -25,7 +25,7 @@ export function NativeButton({ label, onPress, disabled, variant = 'filled' }: N
   return (
     <Button
       variant={BUTTON_VARIANT[variant]}
-      size="lg"
+      size="md"
       isDisabled={disabled}
       onPress={onPress}
       accessibilityLabel={label}
