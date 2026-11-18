@@ -12,7 +12,8 @@ import { alpha, radius, useTheme } from '@/theme'
 import type { Solar } from '@/types'
 import { formatPower } from './flowModel'
 
-const HISTORY_DAYS = 14
+/** Days of harvest the card charts; callers load this many from InfluxDB. */
+export const SOLAR_HISTORY_DAYS = 14
 const CHART_H = 128
 
 function dayLabel(daysAgo: number): string {
@@ -126,13 +127,13 @@ const SolarHistory = memo(function SolarHistory({ view }: { view: YieldHistoryVi
 
 /**
  * The solar controller's live power, today's harvest and the last days as bars (dashboard
- * `start/SolarCard`). The history is the controller's own retained log on the bus; there is no
- * chart until it publishes one.
+ * `start/SolarCard`). The history is the hub's InfluxDB log (see `useSolarYieldHistory`), or the
+ * controller's own short log on the bus; there is no chart until one has days.
  */
 export function SolarCard({ solar }: { solar: Solar }) {
   const { colors } = useTheme()
   const log = solar.yield_history_wh
-  const history = useMemo(() => yieldHistoryView(log, HISTORY_DAYS), [log])
+  const history = useMemo(() => yieldHistoryView(log, SOLAR_HISTORY_DAYS), [log])
   const power = formatPower(Math.round(solar.power_w))
   const today =
     solar.yield_today_wh === undefined ? undefined : formatYieldAmount(solar.yield_today_wh)

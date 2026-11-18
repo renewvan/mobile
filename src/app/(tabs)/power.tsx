@@ -4,10 +4,10 @@ import { Text } from 'react-native'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { flowFromBus } from '@/components/power/flowModel'
 import { PowerFlow } from '@/components/power/PowerFlow'
-import { SolarCard } from '@/components/power/SolarCard'
+import { SOLAR_HISTORY_DAYS, SolarCard } from '@/components/power/SolarCard'
 import { Screen } from '@/components/Screen'
 import { NoData, TitledCard } from '@/components/ui'
-import { firstSolar } from '@/components/widgets/solar/solarView'
+import { useFirstSolarWithHistory } from '@/hooks/useSolarYieldHistory'
 import { completeBatteryIds, primaryBattery } from '@/lib/primaryBattery'
 import { usePreferences } from '@/preferences/PreferencesProvider'
 import { useTheme } from '@/theme'
@@ -30,7 +30,7 @@ export default function PowerTab() {
   const primary = primaryBattery(batteries, choice)
   // With more than one battery, say which one the diagram reads.
   const namesSource = completeBatteryIds(batteries).length > 1 && primary !== undefined
-  const solarRecord = firstSolar(solar)
+  const solarRecord = useFirstSolarWithHistory(solar, SOLAR_HISTORY_DAYS)
 
   return (
     <Screen>

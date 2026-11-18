@@ -103,24 +103,54 @@ export function historyDayLabel(daysAgo: number, now: Date): string {
 }
 
 /**
- * InfluxDB's one-point-per-local-day yield, as the same newest-first list the controller's own log
- * uses (index 0 is today), so the charts take either. A day with no point or no value is `null`, not
- * `0`; the list stops at the oldest day with data rather than padding, and `undefined` means no day
- * has any. If several series report the same day, the best value wins.
+ * The newest segment (the controller's current day) only reads as "today" while it is young
+ * enough: its first hour-max lands within an hour of the controller's midnight, so beyond a day
+ * plus that hour the controller has fallen silent and today stays a gap.
+ */
+const DAY_START_MAX_AGE_MS = 26 * 3_600_000
+
+/**
+ * InfluxDB's hourly maxima of the controller's `yield_today_wh`, as the same newest-first list the
+ * controller's own log uses (index 0 is today), so the charts take either. The counter climbs
+ * through a day and resets at the controller's midnight, so every drop between consecutive hour
+ * maxima is that midnight — whatever time zone the controller lives in. The hours are segmented at
+ * the drops and each segment's maximum is that day's harvest: no time zone from anyone, so a kiosk
+ * in another zone than its controller still charts whole days. A day that harvested nothing is
+ * `null`, not `0`; the list stops at the oldest day with data rather than padding, and `undefined`
+ * means no day has any.
  */
 export function yieldHistoryFromPoints(
   points: readonly FluxPoint[],
   count: number,
   now: Date,
 ): (number | null)[] | undefined {
-  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+  const hours = points
+    .filter((point): point is FluxPoint & { value: number } => point.value !== null)
+    .slice()
+    .sort((a, b) => a.time.getTime() - b.time.getTime())
+  if (hours.length === 0) return undefined
+
+  // The controller's days, oldest first: a climb ends where the next hour's max is lower.
+  const segments: { wh: number; startedAt: number }[] = []
+  let dayMax = 0
+  let dayStartedAt = hours[0].time.getTime()
+  let previous = Number.NEGATIVE_INFINITY
+  for (const { time, value } of hours) {
+    if (value < previous) {
+      segments.push({ wh: dayMax, startedAt: dayStartedAt })
+      dayMax = 0
+      dayStartedAt = time.getTime()
+    }
+    dayMax = Math.max(dayMax, value)
+    previous = value
+  }
+  segments.push({ wh: dayMax, startedAt: dayStartedAt })
+
   const days: (number | null)[] = Array.from({ length: count }, () => null)
-  for (const { time, value } of points) {
-    const daysAgo = Math.round(
-      (today - Date.UTC(time.getFullYear(), time.getMonth(), time.getDate())) / 86_400_000,
-    )
-    if (daysAgo < 0 || daysAgo >= count || value === null) continue
-    days[daysAgo] = Math.max(days[daysAgo] ?? 0, value)
+  const todayIsIn = now.getTime() - segments[segments.length - 1].startedAt <= DAY_START_MAX_AGE_MS
+  const firstDay = todayIsIn ? 0 : 1
+  for (let i = 0; i < segments.length && firstDay + i < count; i++) {
+    days[firstDay + i] = segments[segments.length - 1 - i].wh
   }
   const oldest = days.findLastIndex((wh) => wh !== null)
   return oldest === -1 ? undefined : days.slice(0, oldest + 1)
