@@ -58,6 +58,7 @@ import { basemapStyle, type MapTheme } from '@/lib/mapStyle'
 import { sideViewRotation, tiltReading } from '@/lib/tilt'
 import { compassPoint, facesLeft, headingDeg } from '@/lib/vanMarker'
 import { useOverlayTop } from '@/components/settings/kit'
+import { usePreferences } from '@/preferences/PreferencesProvider'
 import { useSession } from '@/session/SessionProvider'
 import { radius, useTheme } from '@/theme'
 import { hasGpsFix, isCompleteGps, type Gps } from '@/types'
@@ -147,17 +148,21 @@ const OUTLINE = '#0f172a'
 const GLASS_GREY = '#9e9e9e'
 
 /**
- * The van on the map: the filled side view, in the accent colour. It mirrors to face the way it is
+ * The van on the map: the filled side view, in the owner's colour or else the accent. It mirrors to face the way it is
  * heading and pitches with the tilt sensor, pivoting on its wheels as the tilt widget does.
  */
 const VanArt = memo(function VanArt({
   heading,
   pitch,
+  color,
 }: {
   heading: number | null
   pitch: number | null
+  /** `#rrggbb`; the theme accent when empty. */
+  color: string
 }) {
   const { colors } = useTheme()
+  const fill = color || colors.accent
   return (
     <View
       // The mirror also flips the child's rotation, so a left-facing van's nose-up pitch is still
@@ -175,8 +180,8 @@ const VanArt = memo(function VanArt({
         }}
       >
         <Svg width={VAN_W} height={VAN_H} viewBox={`0 0 ${VAN_SIDE_W} ${VAN_SIDE_H}`}>
-          <Path d={VAN_BODY_PATH} fill={colors.accent} />
-          <Path d={VAN_BUMPER_PATH} fill={colors.accent} />
+          <Path d={VAN_BODY_PATH} fill={fill} />
+          <Path d={VAN_BUMPER_PATH} fill={fill} />
           {VAN_GLASS_PATHS.map((d) => (
             <Path key={d} d={d} fill={GLASS_GREY} />
           ))}
@@ -299,7 +304,15 @@ export function VanMap(props: VanMapProps) {
   // The van pitches to the nearest half degree: a sensor's noise below that, redrawn at every
   // message, cost the Start tab more than any other widget.
   const shownPitch = pitch === null ? null : Math.round(pitch * 2) / 2
-  return <VanMapView {...props} record={id ? state.gps[id] : undefined} pitch={shownPitch} />
+  const { van } = usePreferences()
+  return (
+    <VanMapView
+      {...props}
+      record={id ? state.gps[id] : undefined}
+      pitch={shownPitch}
+      vanColor={van.color}
+    />
+  )
 }
 
 const VanMapView = memo(function VanMapView({
@@ -307,7 +320,8 @@ const VanMapView = memo(function VanMapView({
   onExpand,
   record,
   pitch,
-}: VanMapProps & { record: Gps | undefined; pitch: number | null }) {
+  vanColor,
+}: VanMapProps & { record: Gps | undefined; pitch: number | null; vanColor: string }) {
   const { connection } = useSession()
   const { isDark } = useTheme()
   const isCard = variant === 'card'
@@ -391,6 +405,7 @@ const VanMapView = memo(function VanMapView({
           longitude={longitude}
           heading={heading}
           pitch={pitch}
+          vanColor={vanColor}
         />
       )}
 
@@ -500,6 +515,7 @@ const MapCanvas = memo(function MapCanvas({
   longitude,
   heading,
   pitch,
+  vanColor,
 }: {
   mapRef: RefObject<MapRef | null>
   cameraRef: RefObject<CameraRef | null>
@@ -511,6 +527,7 @@ const MapCanvas = memo(function MapCanvas({
   longitude: number | undefined
   heading: number | null
   pitch: number | null
+  vanColor: string
 }) {
   return (
     <MapView
@@ -535,7 +552,7 @@ const MapCanvas = memo(function MapCanvas({
       {latitude !== undefined && longitude !== undefined && (
         // Wheels on the ground at the position: bottom-centre.
         <Marker id="van" lngLat={[longitude, latitude]} anchor="bottom">
-          <VanArt heading={heading} pitch={pitch} />
+          <VanArt heading={heading} pitch={pitch} color={vanColor} />
         </Marker>
       )}
     </MapView>

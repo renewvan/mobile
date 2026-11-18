@@ -22,20 +22,38 @@ describe('parsePreferences', () => {
       devicesSort: 'entity',
       powerLayout: 'van-orbs',
       alertsEnabled: false,
-      van: { name: 'Olga', brand: 'Fiat', model: 'Ducato', kms: '120000', plate: 'FR-RV 1' },
+      van: {
+        name: 'Olga',
+        brand: 'Fiat',
+        model: 'Ducato',
+        kms: '120000',
+        plate: 'FR-RV 1',
+        color: '#ef4444',
+      },
     }
     expect(parsePreferences(JSON.stringify(stored))).toEqual(stored)
   })
 
   it('checks each field on its own, so one bad value does not lose the rest', () => {
     const parsed = parsePreferences(
-      JSON.stringify({ theme: 'sepia', devicesSort: 'entity', van: { name: 'Olga', kms: 12 } }),
+      JSON.stringify({
+        theme: 'sepia',
+        devicesSort: 'entity',
+        van: { name: 'Olga', kms: 12, color: 'red' },
+      }),
     )
     expect(parsed.theme).toBe('system')
     expect(parsed.devicesSort).toBe('entity')
     expect(parsed.powerLayout).toBe('van-tiles')
     expect(parsed.startLayout).toEqual(DEFAULT_START_LAYOUT)
-    expect(parsed.van).toEqual({ name: 'Olga', brand: '', model: '', kms: '', plate: '' })
+    expect(parsed.van).toEqual({
+      name: 'Olga',
+      brand: '',
+      model: '',
+      kms: '',
+      plate: '',
+      color: '',
+    })
   })
 
   it('drops widgets it does not know and repeats, but keeps an empty layout as a choice', () => {
