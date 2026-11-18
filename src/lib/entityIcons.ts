@@ -1,0 +1,149 @@
+import {
+  Armchair,
+  Bath,
+  Bed,
+  Car,
+  Container,
+  Cpu,
+  Droplet,
+  Fan,
+  Faucet,
+  Flame,
+  Fuel,
+  GlassWater,
+  House,
+  Lamp,
+  Lightbulb,
+  Microwave,
+  Park,
+  Plug,
+  Power,
+  Refrigerator,
+  ShowerHead,
+  Snowflake,
+  Sun,
+  Thermometer,
+  Toilet,
+  Trees,
+  Truck,
+  Tv,
+  Usb,
+  Warehouse,
+  Waves,
+  Wind,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react-native'
+
+/**
+ * The icons an entity can ask for: its `icon` is the lucide component name as a string
+ * (`Refrigerator`). A curated list rather than lucide's whole set, which would put every icon in the
+ * bundle; a name outside it reads as no choice, so the dashboard picks one from the entity itself.
+ */
+const ENTITY_ICONS: Record<string, LucideIcon> = {
+  Park,
+  Trees,
+  Armchair,
+  Cpu,
+  Thermometer,
+  Refrigerator,
+  Snowflake,
+  Sun,
+  Flame,
+  House,
+  Car,
+  Truck,
+  Droplet,
+  Wind,
+  Warehouse,
+  Bed,
+  Fan,
+  Waves,
+  Toilet,
+  Fuel,
+  ShowerHead,
+  Bath,
+  GlassWater,
+  Container,
+  Faucet,
+  Lightbulb,
+  Lamp,
+  Microwave,
+  Usb,
+  Plug,
+  Zap,
+  Tv,
+  Power,
+}
+
+/** What the Settings picker offers a temperature probe, and a tank. */
+export const TEMPERATURE_ICON_NAMES = [
+  'Park',
+  'Trees',
+  'Armchair',
+  'Cpu',
+  'Thermometer',
+  'Refrigerator',
+  'Snowflake',
+  'Sun',
+  'Flame',
+  'House',
+  'Car',
+  'Truck',
+  'Droplet',
+  'Wind',
+  'Warehouse',
+  'Bed',
+  'Fan',
+]
+
+export const TANK_ICON_NAMES = [
+  'Droplet',
+  'Waves',
+  'Toilet',
+  'Fuel',
+  'Flame',
+  'ShowerHead',
+  'Bath',
+  'GlassWater',
+  'Container',
+  'Faucet',
+]
+
+/** What the Settings picker offers a relay channel: the load it switches. */
+export const RELAY_ICON_NAMES = [
+  'Lightbulb',
+  'Lamp',
+  'Refrigerator',
+  'Microwave',
+  'Tv',
+  'Fan',
+  'Wind',
+  'Snowflake',
+  'Sun',
+  'Flame',
+  'Droplet',
+  'Waves',
+  'Usb',
+  'Zap',
+  'Plug',
+  'Bed',
+  'Power',
+]
+
+/** The entities whose icon a client can pick. */
+export type IconEntity = 'tank' | 'temperature' | 'relay'
+
+/** The key of an instance in the shared icons map (`renewvan/hub/icons`): `<entity>/<id>`. */
+export function iconKey(entity: IconEntity, id: string): string {
+  return `${entity}/${id}`
+}
+
+/** The icon for an entity's `icon` string, or `undefined` when it has none the dashboard knows. */
+export function entityIcon(name: string | undefined): LucideIcon | undefined {
+  return name === undefined ? undefined : ENTITY_ICONS[name]
+}
+
+export function entityIconOf(name: string): LucideIcon {
+  return ENTITY_ICONS[name]
+}
