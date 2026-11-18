@@ -10,6 +10,9 @@ redrawn with React Native and platform components; the logic that decides what a
 file with its tests, so the two cannot disagree. The wire contract is the hub's
 (`hub/schema/*.schema.json`).
 
+**Status: beta, 0.1.** Expect rough edges and changes before 1.0. The version is `version` in
+`app.json` (shown in Settings); it stays numeric, `major.minor.patch`, as the stores require.
+
 Android is the platform this version is built and tested on. Nothing in it is Android-only by
 design (every control has a plain React Native fallback), but iOS has not been run.
 
