@@ -1,5 +1,5 @@
+import { useToast } from 'heroui-native'
 import { useEffect, useRef, useState } from 'react'
-import { Platform, ToastAndroid } from 'react-native'
 import type { Heater } from '@/types'
 
 /**
@@ -47,9 +47,10 @@ type Timer = ReturnType<typeof setTimeout>
  * Pending and failed commands for one heater (dashboard `HeaterPage`). Whether a stored entry
  * still applies is derived at render from the heater's real fields: it is over once the field
  * leaves the value it was sent from. A command the heater never confirms is reported with the
- * platform's own toast.
+ * toast (the dashboard's `toast.danger`).
  */
 export function useHeaterCommands(heater: Heater, frozen: boolean) {
+  const { toast } = useToast()
   const [pending, setPending] = useState<Partial<Record<Field, Pending>>>({})
   const [wasFrozen, setWasFrozen] = useState(frozen)
   const timers = useRef<Map<Field, Timer>>(new Map())
@@ -88,9 +89,7 @@ export function useHeaterCommands(heater: Heater, frozen: boolean) {
         setPending((prev) =>
           prev[field] ? { ...prev, [field]: { ...prev[field], failed: true } } : prev,
         )
-        if (Platform.OS === 'android') {
-          ToastAndroid.show(FAILURE_TITLES[field], ToastAndroid.LONG)
-        }
+        toast.show({ variant: 'danger', label: FAILURE_TITLES[field], description: heater.name })
       }, GIVE_UP_MS),
     )
     action()

@@ -2,6 +2,7 @@ import {
   DEFAULT_PREFERENCES,
   DEFAULT_START_LAYOUT,
   isDefaultLayout,
+  layoutAfterDrop,
   moved,
   parsePreferences,
 } from './preferences'
@@ -20,6 +21,7 @@ describe('parsePreferences', () => {
       hiddenTemperatures: ['pi_cpu'],
       devicesSort: 'entity',
       powerLayout: 'van-orbs',
+      alertsEnabled: false,
       van: { name: 'Olga', brand: 'Fiat', model: 'Ducato', kms: '120000', plate: 'FR-RV 1' },
     }
     expect(parsePreferences(JSON.stringify(stored))).toEqual(stored)
@@ -53,6 +55,39 @@ describe('powerLayout', () => {
     // The dashboard's layouts without the van are not drawn here.
     expect(layout('orbs')).toBe('van-tiles')
     expect(layout(3)).toBe('van-tiles')
+  })
+})
+
+describe('alertsEnabled', () => {
+  it('is on unless it was switched off', () => {
+    const enabled = (alertsEnabled: unknown) =>
+      parsePreferences(JSON.stringify({ alertsEnabled })).alertsEnabled
+    expect(enabled(false)).toBe(false)
+    expect(enabled(true)).toBe(true)
+    expect(enabled('no')).toBe(true)
+    expect(parsePreferences(null).alertsEnabled).toBe(true)
+  })
+})
+
+describe('layoutAfterDrop', () => {
+  const layout = ['temperature', 'map', 'energy'] as const
+  // slots: temperature, map, energy, divider, heater, solar, tilt, fresh-water, grey-water
+  it('reorders within the shown widgets', () => {
+    expect(layoutAfterDrop(layout, 0, 2)).toEqual(['map', 'energy', 'temperature'])
+  })
+
+  it('shows a hidden widget dropped above the divider, at that place', () => {
+    expect(layoutAfterDrop(layout, 4, 1)).toEqual(['temperature', 'heater', 'map', 'energy'])
+  })
+
+  it('hides a shown widget dropped below the divider', () => {
+    expect(layoutAfterDrop(layout, 0, 3)).toEqual(['map', 'energy'])
+  })
+
+  it('changes nothing for the divider, a hidden widget moved among the hidden, or a drop in place', () => {
+    expect(layoutAfterDrop(layout, 3, 0)).toBe(layout)
+    expect(layoutAfterDrop(layout, 4, 6)).toBe(layout)
+    expect(layoutAfterDrop(layout, 1, 1)).toBe(layout)
   })
 })
 

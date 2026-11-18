@@ -20,6 +20,7 @@ export function SettingsScreen({
   title,
   children,
   scroll = true,
+  banner = true,
 }: {
   title: string
   children: ReactNode
@@ -28,6 +29,8 @@ export function SettingsScreen({
    * and the app bar and status bar laid transparently over it, as the dashboard's Map page does.
    */
   scroll?: boolean
+  /** False where the screen changes nothing on the van, so "changes will not be sent" would be wrong (the alert list). */
+  banner?: boolean
 }) {
   const { colors } = useTheme()
   const insets = useSafeAreaInsets()
@@ -49,7 +52,7 @@ export function SettingsScreen({
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.screen, { paddingBottom: insets.bottom + layout.gutter }]}
       >
-        {status === 'disconnected' ? (
+        {banner && status === 'disconnected' ? (
           <Banner tone="danger">Not connected to the van. Changes will not be sent.</Banner>
         ) : null}
         {children}

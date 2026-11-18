@@ -7,6 +7,7 @@ import {
   type StyleSpecification,
 } from '@maplibre/maplibre-react-native'
 import {
+  Info,
   LocateFixed,
   Map as MapIcon,
   MapPin,
@@ -27,7 +28,16 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react'
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native'
+import { Button, Dialog } from 'heroui-native'
+import {
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Path } from 'react-native-svg'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
@@ -360,6 +370,7 @@ const VanMapView = memo(function VanMapView({
   }, [cell, opening === null])
 
   const [failed, setFailed] = useState(false)
+  const [creditsOpen, setCreditsOpen] = useState(false)
   const zoomBy = (delta: number) => {
     void mapRef.current
       ?.getZoom()
@@ -375,7 +386,6 @@ const VanMapView = memo(function VanMapView({
           opening={opening}
           mapStyle={style}
           isCard={isCard}
-          bottomInset={bottomInset}
           onFailed={setFailed}
           latitude={latitude}
           longitude={longitude}
@@ -427,6 +437,43 @@ const VanMapView = memo(function VanMapView({
         <MapButton icon={Minus} label="Zoom out" onPress={() => zoomBy(-1)} />
       </View>
 
+      <View style={[styles.bottomRight, { bottom: 10 + bottomInset }]}>
+        <MapButton icon={Info} label="Map credits" onPress={() => setCreditsOpen(true)} />
+      </View>
+      {/* The tiles are ODbL: this credit is a licence condition, so the button stays. */}
+      <Dialog isOpen={creditsOpen} onOpenChange={setCreditsOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content>
+            <View className="mb-5 gap-1.5">
+              <Dialog.Title>Map credits</Dialog.Title>
+              <Dialog.Description>
+                © OpenStreetMap contributors, under the Open Database Licence. Tiles by Protomaps.
+              </Dialog.Description>
+            </View>
+            <View className="flex-row flex-wrap justify-end gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => void Linking.openURL('https://openstreetmap.org/copyright')}
+              >
+                OpenStreetMap
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => void Linking.openURL('https://protomaps.com')}
+              >
+                Protomaps
+              </Button>
+              <Button size="sm" onPress={() => setCreditsOpen(false)}>
+                Close
+              </Button>
+            </View>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
+
       <View style={[styles.bottom, { bottom: 10 + bottomInset }]} pointerEvents="box-none">
         {record && fixed ? (
           <Readout record={record} heading={heading} />
@@ -448,7 +495,6 @@ const MapCanvas = memo(function MapCanvas({
   opening,
   mapStyle,
   isCard,
-  bottomInset,
   onFailed,
   latitude,
   longitude,
@@ -460,7 +506,6 @@ const MapCanvas = memo(function MapCanvas({
   opening: LatLon
   mapStyle: ComponentProps<typeof MapView>['mapStyle']
   isCard: boolean
-  bottomInset: number
   onFailed: (failed: boolean) => void
   latitude: number | undefined
   longitude: number | undefined
@@ -481,9 +526,8 @@ const MapCanvas = memo(function MapCanvas({
       touchPitch={false}
       logo={false}
       compass={false}
-      // The tiles are ODbL: the attribution is a licence condition, so its (i) stays.
-      attribution
-      attributionPosition={{ bottom: 8 + bottomInset, right: 8 }}
+      // The native (i) opens an OS alert; `VanMap` draws its own button and dialog instead.
+      attribution={false}
       onDidFailLoadingMap={() => onFailed(true)}
       onDidFinishLoadingStyle={() => onFailed(false)}
     >
@@ -518,9 +562,10 @@ const styles = StyleSheet.create({
   topRight: { position: 'absolute', top: 12, right: 12, gap: 8 },
   // Clear of the buttons either side.
   topNotice: { position: 'absolute', top: 12, left: 68, right: 68 },
+  bottomRight: { position: 'absolute', right: 12 },
   bottom: { position: 'absolute', left: 10, right: 10, alignItems: 'flex-start' },
   readout: {
-    // Leaves the attribution's (i) its corner.
+    // Leaves the credits button its corner.
     maxWidth: '82%',
     paddingHorizontal: 14,
     paddingVertical: 10,

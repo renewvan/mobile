@@ -24,6 +24,7 @@ export const SETTINGS_VIEWS = [
   'about',
   'display',
   'kiosk',
+  'alerts',
   'widgets',
   'power-page',
   'temperature-page',

@@ -1,6 +1,6 @@
 import { router } from 'expo-router'
-import { Alert, StyleSheet, Text, View } from 'react-native'
-import { NativeButton, Segmented } from '@/components/native'
+import { StyleSheet, Text, View } from 'react-native'
+import { confirm, NativeButton, Segmented } from '@/components/native'
 import { tabular } from '@/components/ui'
 import { formatYieldAmount } from '@/components/widgets/solar/solarView'
 import { chargerWatts } from '@/lib/charging'
@@ -490,19 +490,14 @@ export function HeaterView() {
 
         // The Driver's own switch decides who may run a flame, so it is always asked about.
         const confirmCommands = (target: boolean) =>
-          Alert.alert(
-            target ? `Enable controls for ${label}?` : `Disable controls for ${label}?`,
-            target
+          confirm({
+            title: target ? `Enable controls for ${label}?` : `Disable controls for ${label}?`,
+            message: target
               ? 'Anyone who can reach the van’s broker will be able to start and stop the heater. Make sure someone is with the van.'
               : 'The heater keeps doing what it is doing, but it can no longer be started, stopped or adjusted from the dashboard or this app.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: target ? 'Enable' : 'Disable',
-                onPress: () => commands.setHeaterCommandsEnabled(id, target),
-              },
-            ],
-          )
+            action: target ? 'Enable' : 'Disable',
+            onConfirm: () => commands.setHeaterCommandsEnabled(id, target),
+          })
 
         return (
           <Group key={id} title={label}>
@@ -1079,15 +1074,14 @@ function TiltInstance({ id }: { id: string }) {
   if (record === undefined) return <Empty>This sensor is no longer on the bus.</Empty>
   const { roll, pitch } = tiltReading(record)
   const live = roll !== null
-  const confirm = () =>
-    Alert.alert(
-      'Set level?',
-      'The van must be parked on level ground. Roll and pitch will read 0° from now on, from where it sits.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Set level', onPress: () => commands.setTiltLevel(id) },
-      ],
-    )
+  const askSetLevel = () =>
+    confirm({
+      title: 'Set level?',
+      message:
+        'The van must be parked on level ground. Roll and pitch will read 0° from now on, from where it sits.',
+      action: 'Set level',
+      onConfirm: () => commands.setTiltLevel(id),
+    })
   return (
     <>
       <DetailList>
@@ -1100,7 +1094,7 @@ function TiltInstance({ id }: { id: string }) {
           <Note>
             Park the van on level ground, then set level to make the current roll and pitch read 0°.
           </Note>
-          <NativeButton label="Set level" disabled={demoMode || !live} onPress={confirm} />
+          <NativeButton label="Set level" disabled={demoMode || !live} onPress={askSetLevel} />
           <NativeButton
             label="Reset"
             variant="outlined"
