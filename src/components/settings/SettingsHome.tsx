@@ -3,7 +3,7 @@ import {
   Car,
   Map as MapIcon,
   Monitor,
-  SlidersHorizontal,
+  Settings2,
   Smartphone,
   Wifi,
   Workflow,
@@ -43,7 +43,7 @@ export function SettingsHome() {
       />
       <Group title="Hub">
         <NavRow
-          icon={<SlidersHorizontal {...icon} />}
+          icon={<Settings2 {...icon} />}
           label="General"
           description="Display, widgets, firmware, demo mode"
           onPress={() => openSettings('general')}

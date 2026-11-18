@@ -1,10 +1,10 @@
 import { router } from 'expo-router'
-import { Settings2 } from 'lucide-react-native'
+import { SymbolView } from 'expo-symbols'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
-import { useTheme } from '@/theme'
+import { radius, useTheme } from '@/theme'
 import { LogoLockup } from './Logo'
 
 /**
@@ -45,7 +45,11 @@ export function AppHeader() {
           onPress={() => router.push('/settings')}
           style={styles.menu}
         >
-          <Settings2 size={22} color={colors.foreground} />
+          <SymbolView
+            name={{ ios: 'slider.horizontal.3', android: 'tune', web: 'tune' }}
+            size={22}
+            tintColor={colors.foreground}
+          />
           {attention ? <View style={[styles.dot, { backgroundColor: colors.danger }]} /> : null}
         </Pressable>
       </View>
@@ -63,7 +67,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   right: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  demo: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
+  demo: { borderRadius: radius.lg, paddingHorizontal: 10, paddingVertical: 3 },
   demoText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
   menu: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   dot: {
