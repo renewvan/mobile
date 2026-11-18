@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 import type { Commands } from '@/bus/commands'
 import { confirm, NativeButton, NativeSwitch } from '@/components/native'
+import { Carousel } from '@/components/Carousel'
 import { Card, CardHeader, tabular } from '@/components/ui'
 import { useNow } from '@/hooks/useNow'
 import {
@@ -36,6 +37,7 @@ import {
 import { alpha, radius, useTheme } from '@/theme'
 import type { Heater } from '@/types'
 import { DialSlider } from './DialSlider'
+import { TimerHeader, TimerPicker } from './HeaterTimer'
 import { useHeaterCommands, type Field } from './useHeaterCommands'
 
 const OPERATING_MODE_ICONS: Record<OperatingMode, LucideIcon> = {
@@ -51,8 +53,12 @@ export interface HeaterCardProps {
   /** Demo mode, or the heater's Driver is not online: everything reads Unknown and nothing is sent. */
   frozen: boolean
   commands: Commands
-  /** The second card, with the sensor readings and the runtime. The Start tab leaves it out. */
-  showReadings?: boolean
+  /**
+   * `page` (the Climate tab): the setting card, then a card of readings. `widget` (the Start tab):
+   * one card with a carousel of the setting and of the timer with the readings, as the dashboard's
+   * widget.
+   */
+  variant?: 'page' | 'widget'
 }
 
 function fmt(value: number | undefined, digits: number, unit: string): string {
@@ -111,7 +117,7 @@ function Readings({ heater, reporting }: { heater: Heater; reporting: boolean })
  * changes, a heater whose Driver is down or whose live fields are cleared reads Unknown rather
  * than off, and controls need the Driver's own `commands_enabled` (hub ADR 0021).
  */
-export function HeaterCard({ id, heater, frozen, commands, showReadings = true }: HeaterCardProps) {
+export function HeaterCard({ id, heater, frozen, commands, variant = 'page' }: HeaterCardProps) {
   const { colors } = useTheme()
   const label = heater.name ?? id
   const reporting = !frozen && isReporting(heater)
@@ -237,135 +243,167 @@ export function HeaterCard({ id, heater, frozen, commands, showReadings = true }
   const runBusy = run !== undefined && !run.failed
   const modesDisabled = !modesOk || mode !== undefined
 
+  const header = (
+    <CardHeader
+      icon={<HeaterIcon size={16} color={colors.muted} />}
+      title={label}
+      right={
+        <View style={styles.headerRight}>
+          {/* The dial shows the phase; only "Unknown" (not reporting) is worth keeping up here. */}
+          {!reporting && (
+            <Text style={[styles.unknown, { color: colors.foreground }]}>Unknown</Text>
+          )}
+          <NativeSwitch
+            label={`${label} controls`}
+            value={commandsOn}
+            // Frozen or not reporting: nothing would answer the change.
+            disabled={frozen || !reporting}
+            onChange={(on) => commands.setHeaterCommandsEnabled(id, on)}
+          />
+        </View>
+      }
+    />
+  )
+
+  const setting = (
+    <>
+      <DialSlider
+        label={byPower ? 'Power' : 'Target'}
+        value={dialBusy && dial.to !== undefined ? dial.to : dialValue}
+        min={byPower ? POWER_RANGE.min : SETPOINT_RANGE.min}
+        max={byPower ? POWER_RANGE.max : SETPOINT_RANGE.max}
+        unit={byPower ? '' : '°C'}
+        tone={tone}
+        status={phase}
+        marker={byPower ? undefined : cabin}
+        reading={cabin === undefined ? undefined : `${cabin.toFixed(1)} °C`}
+        disabled={!settingsOk}
+        busy={dialBusy}
+        onCommit={(to) =>
+          byPower
+            ? send('power', () => commands.setHeaterPowerLevel(id, to), to)
+            : send('setpoint', () => commands.setHeaterSetpoint(id, to), to)
+        }
+      />
+
+      {infoText !== undefined && (
+        <View style={styles.info}>
+          <Info size={14} color={colors.muted} />
+          <Text numberOfLines={2} style={[styles.infoText, { color: colors.muted }]}>
+            {infoText}
+          </Text>
+        </View>
+      )}
+
+      <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel={`${label} mode`}
+        style={[
+          styles.modes,
+          { backgroundColor: colors.default, opacity: modesDisabled ? 0.5 : 1 },
+        ]}
+      >
+        {OPERATING_MODES.map(({ key, label: modeLabel }) => {
+          const ModeIcon = OPERATING_MODE_ICONS[key]
+          const selected = key === current
+          const fg = selected ? toneFg : colors.foreground
+          return (
+            <Pressable
+              key={key}
+              accessibilityRole="radio"
+              accessibilityLabel={modeLabel}
+              accessibilityState={{ selected, disabled: modesDisabled }}
+              disabled={modesDisabled}
+              android_ripple={{ color: alpha(tone, 0.2) }}
+              onPress={() => pickMode(key)}
+              style={[styles.mode, selected && { backgroundColor: tone, flexGrow: 2.2 }]}
+            >
+              <ModeIcon size={20} color={fg} />
+              {/* The current mode is named; the others are icons to save the width. */}
+              {selected && (
+                <Text numberOfLines={1} style={[styles.modeLabel, { color: fg }]}>
+                  {modeLabel}
+                </Text>
+              )}
+            </Pressable>
+          )
+        })}
+      </View>
+
+      <View style={styles.startStop}>
+        <View style={{ flex: 1 }}>
+          {canStop(heater) ? (
+            <NativeButton
+              label="Stop"
+              variant="danger"
+              disabled={!controls || runBusy}
+              onPress={() => send('run', () => commands.setHeaterRunning(id, false))}
+            />
+          ) : (
+            <NativeButton
+              label="Start"
+              disabled={!controls || !canStart(heater) || runBusy}
+              onPress={confirmStart}
+            />
+          )}
+        </View>
+        {runBusy && <ActivityIndicator size="small" color={colors.accent} />}
+      </View>
+      {controls && heater.phase === 'off' && hasError(heater) && (
+        <Text style={{ color: colors.muted, fontSize: 12 }}>Can&apos;t start with a fault.</Text>
+      )}
+    </>
+  )
+
+  const readings = (
+    <>
+      <TimerHeader />
+      <TimerPicker />
+      {reporting && hasError(heater) && (
+        <View
+          accessibilityRole="alert"
+          style={[styles.fault, { backgroundColor: alpha(colors.danger, 0.1) }]}
+        >
+          <TriangleAlert size={16} color={colors.danger} />
+          <Text style={{ color: colors.danger, fontSize: 14 }}>
+            Heater fault, error {heater.error_code}
+          </Text>
+        </View>
+      )}
+      <Readings heater={heater} reporting={reporting} />
+    </>
+  )
+
+  if (variant === 'widget') {
+    return (
+      <Card>
+        {header}
+        <Carousel
+          label={label}
+          slides={[
+            {
+              id: 'dial',
+              label: 'Setting',
+              content: <View style={styles.content}>{setting}</View>,
+            },
+            {
+              id: 'readings',
+              label: 'Readings',
+              content: <View style={styles.content}>{readings}</View>,
+            },
+          ]}
+        />
+      </Card>
+    )
+  }
+
   return (
     <>
       <Card>
-        <CardHeader
-          icon={<HeaterIcon size={16} color={colors.muted} />}
-          title={label}
-          right={
-            <View style={styles.headerRight}>
-              {/* The dial shows the phase; only "Unknown" (not reporting) is worth keeping up here. */}
-              {!reporting && (
-                <Text style={[styles.unknown, { color: colors.foreground }]}>Unknown</Text>
-              )}
-              <NativeSwitch
-                label={`${label} controls`}
-                value={commandsOn}
-                // Frozen or not reporting: nothing would answer the change.
-                disabled={frozen || !reporting}
-                onChange={(on) => commands.setHeaterCommandsEnabled(id, on)}
-              />
-            </View>
-          }
-        />
-        <View style={styles.content}>
-          <DialSlider
-            label={byPower ? 'Power' : 'Target'}
-            value={dialBusy && dial.to !== undefined ? dial.to : dialValue}
-            min={byPower ? POWER_RANGE.min : SETPOINT_RANGE.min}
-            max={byPower ? POWER_RANGE.max : SETPOINT_RANGE.max}
-            unit={byPower ? '' : '°C'}
-            tone={tone}
-            status={phase}
-            marker={byPower ? undefined : cabin}
-            reading={cabin === undefined ? undefined : `${cabin.toFixed(1)} °C`}
-            disabled={!settingsOk}
-            busy={dialBusy}
-            onCommit={(to) =>
-              byPower
-                ? send('power', () => commands.setHeaterPowerLevel(id, to), to)
-                : send('setpoint', () => commands.setHeaterSetpoint(id, to), to)
-            }
-          />
-
-          {infoText !== undefined && (
-            <View style={styles.info}>
-              <Info size={14} color={colors.muted} />
-              <Text numberOfLines={2} style={[styles.infoText, { color: colors.muted }]}>
-                {infoText}
-              </Text>
-            </View>
-          )}
-
-          <View
-            accessibilityRole="radiogroup"
-            accessibilityLabel={`${label} mode`}
-            style={[
-              styles.modes,
-              { backgroundColor: colors.default, opacity: modesDisabled ? 0.5 : 1 },
-            ]}
-          >
-            {OPERATING_MODES.map(({ key, label: modeLabel }) => {
-              const ModeIcon = OPERATING_MODE_ICONS[key]
-              const selected = key === current
-              const fg = selected ? toneFg : colors.foreground
-              return (
-                <Pressable
-                  key={key}
-                  accessibilityRole="radio"
-                  accessibilityLabel={modeLabel}
-                  accessibilityState={{ selected, disabled: modesDisabled }}
-                  disabled={modesDisabled}
-                  android_ripple={{ color: alpha(tone, 0.2) }}
-                  onPress={() => pickMode(key)}
-                  style={[styles.mode, selected && { backgroundColor: tone, flexGrow: 2.2 }]}
-                >
-                  <ModeIcon size={20} color={fg} />
-                  {/* The current mode is named; the others are icons to save the width. */}
-                  {selected && (
-                    <Text numberOfLines={1} style={[styles.modeLabel, { color: fg }]}>
-                      {modeLabel}
-                    </Text>
-                  )}
-                </Pressable>
-              )
-            })}
-          </View>
-
-          <View style={styles.startStop}>
-            <View style={{ flex: 1 }}>
-              {canStop(heater) ? (
-                <NativeButton
-                  label="Stop"
-                  variant="danger"
-                  disabled={!controls || runBusy}
-                  onPress={() => send('run', () => commands.setHeaterRunning(id, false))}
-                />
-              ) : (
-                <NativeButton
-                  label="Start"
-                  disabled={!controls || !canStart(heater) || runBusy}
-                  onPress={confirmStart}
-                />
-              )}
-            </View>
-            {runBusy && <ActivityIndicator size="small" color={colors.accent} />}
-          </View>
-          {controls && heater.phase === 'off' && hasError(heater) && (
-            <Text style={{ color: colors.muted, fontSize: 12 }}>
-              Can&apos;t start with a fault.
-            </Text>
-          )}
-        </View>
+        {header}
+        <View style={styles.content}>{setting}</View>
       </Card>
-
-      {showReadings && (
-        <Card style={styles.readingsCard}>
-          {reporting && hasError(heater) && (
-            <View
-              accessibilityRole="alert"
-              style={[styles.fault, { backgroundColor: alpha(colors.danger, 0.1) }]}
-            >
-              <TriangleAlert size={16} color={colors.danger} />
-              <Text style={{ color: colors.danger, fontSize: 14 }}>
-                Heater fault, error {heater.error_code}
-              </Text>
-            </View>
-          )}
-          <Readings heater={heater} reporting={reporting} />
-        </Card>
-      )}
+      <Card style={styles.readingsCard}>{readings}</Card>
     </>
   )
 }

@@ -99,7 +99,7 @@ export default function StartTab() {
             heater={heaters[heaterId]}
             frozen={heaterFrozen}
             commands={commands}
-            showReadings={false}
+            variant="widget"
           />
         )
       }

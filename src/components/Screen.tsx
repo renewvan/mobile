@@ -14,7 +14,7 @@ export interface ScrollLock {
 }
 
 const NO_LOCK: ScrollLock = { lock: () => {}, unlock: () => {} }
-const ScrollLockContext = createContext<ScrollLock>(NO_LOCK)
+export const ScrollLockContext = createContext<ScrollLock>(NO_LOCK)
 
 export function useScrollLock(): ScrollLock {
   return useContext(ScrollLockContext)
