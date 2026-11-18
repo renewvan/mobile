@@ -7,13 +7,13 @@ import { VanMap } from '@/components/map/VanMap'
 import { NativeButton } from '@/components/native'
 import { flowFromBus } from '@/components/power/flowModel'
 import { PowerFlow } from '@/components/power/PowerFlow'
-import { SolarCard } from '@/components/power/SolarCard'
+import { SOLAR_HISTORY_DAYS, SolarCard } from '@/components/power/SolarCard'
 import { Screen } from '@/components/Screen'
 import { openSettings } from '@/components/settings/routes'
 import { TemperaturesCard, TiltCard } from '@/components/start/StartCards'
 import { TankCard } from '@/components/tanks/TankCard'
 import { Card, EmptyState, MutedIcon, NoData, TitledCard } from '@/components/ui'
-import { firstSolar } from '@/components/widgets/solar/solarView'
+import { useFirstSolarWithHistory } from '@/hooks/useSolarYieldHistory'
 import { useNow } from '@/hooks/useNow'
 import { heaterDriversOnline } from '@/lib/drivers'
 import { iconKey } from '@/lib/entityIcons'
@@ -48,6 +48,7 @@ export default function StartTab() {
   const { startLayout, powerLayout } = usePreferences()
   const now = useNow(REFRESH_MS)
   const { batteries, solar, chargers, tanks, heaters, temperatures, tilt } = state
+  const solarRecord = useFirstSolarWithHistory(solar, SOLAR_HISTORY_DAYS)
   const choice = primaryBattery ?? undefined
   const flow = useMemo(
     () => flowFromBus(batteries, solar, chargers, choice),
@@ -104,7 +105,7 @@ export default function StartTab() {
       }
       case 'solar': {
         // No card until a controller publishes: there is nothing to say about solar a van lacks.
-        const record = firstSolar(solar)
+        const record = solarRecord
         return record ? (
           <TitledCard icon={<MutedIcon icon={Sun} />} title="Solar production">
             <SolarCard solar={record} />
@@ -135,7 +136,7 @@ export default function StartTab() {
       case 'heater':
         return [colors, heaters, heaterFrozen, commands]
       case 'solar':
-        return [colors, solar]
+        return [colors, solarRecord]
       case 'tilt':
         return [colors, tilt]
       case 'fresh-water':

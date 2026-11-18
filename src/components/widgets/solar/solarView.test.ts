@@ -134,39 +134,62 @@ describe('historyDayLabel', () => {
 })
 
 describe('yieldHistoryFromPoints', () => {
-  // Local-time dates, so the day arithmetic does not depend on the machine's time zone.
   const now = new Date(2026, 9, 10, 15, 30)
-  const day = (daysAgo: number, value: number | null) => ({
-    time: new Date(2026, 9, 10 - daysAgo),
-    value,
-  })
+  const HOUR = 3_600_000
+  // A controller day as Influx returns it: one max per hour, climbing while the counter climbs.
+  // `hoursBack` places the day's first hour that many hours before `now`.
+  const hoursAgo = (hoursBack: number, values: (number | null)[]) => {
+    const start = new Date(now.getTime() - hoursBack * HOUR)
+    return values.map((value, i) => ({ time: new Date(start.getTime() + i * HOUR), value }))
+  }
 
   it('lays the days out newest first, today at index 0', () => {
-    expect(yieldHistoryFromPoints([day(2, 300), day(1, 200), day(0, 100)], 10, now)).toEqual([
-      100, 200, 300,
-    ])
+    const yesterday = hoursAgo(24, [400, 500, 600, 700])
+    const today = hoursAgo(3, [100, 200, 300])
+
+    expect(yieldHistoryFromPoints([...yesterday, ...today], 10, now)).toEqual([300, 700])
   })
 
-  it('keeps a day without data as a gap and a zero harvest as zero', () => {
-    expect(
-      yieldHistoryFromPoints([day(3, 400), day(2, null), day(1, 0), day(0, 50)], 10, now),
-    ).toEqual([50, 0, null, 400])
+  it('splits days at the counter’s reset, whatever clock time the controller’s midnight is', () => {
+    // A reset at a mid-morning clock time (another time zone, a shifted controller clock): the
+    // drop between hour maxima is the day boundary, not the browser’s calendar.
+    const first = hoursAgo(20, [50, 150, 250])
+    const second = hoursAgo(6, [30, 80])
+
+    expect(yieldHistoryFromPoints([...first, ...second], 10, now)).toEqual([80, 250])
   })
 
-  it('fills a missing day inside the history with a gap', () => {
-    expect(yieldHistoryFromPoints([day(2, 300), day(0, 100)], 10, now)).toEqual([100, null, 300])
+  it('contributes no day for the hours the controller was silent', () => {
+    const older = hoursAgo(27, [100, 200, 300])
+    const today = hoursAgo(3, [100, 150])
+
+    // A silent day has no hours, hence no segment: the list holds the days there are, not a
+    // calendar with holes.
+    expect(yieldHistoryFromPoints([...older, ...today], 10, now)).toEqual([150, 300])
   })
 
-  it('is not padded past the oldest day with data, and not longer than asked', () => {
-    expect(yieldHistoryFromPoints([day(5, 9), day(4, 8), day(0, 1)], 3, now)).toEqual([1])
+  it('keeps today a gap when the controller fell silent before its current day', () => {
+    // The newest hour is 30 hours old: past the newest-day limit, so it reads as yesterday.
+    const stale = hoursAgo(30, [10, 20])
+
+    expect(yieldHistoryFromPoints(stale, 10, now)).toEqual([null, 20])
   })
 
-  it('takes the best value when several series report the same day', () => {
-    expect(yieldHistoryFromPoints([day(0, 900), day(0, 120), day(0, null)], 10, now)).toEqual([900])
+  it('is not longer than asked: the oldest days fall off the window', () => {
+    const oldest = hoursAgo(51, [700])
+    const yesterday = hoursAgo(27, [100, 200, 300])
+    const today = hoursAgo(3, [100, 150])
+
+    expect(yieldHistoryFromPoints([...oldest, ...yesterday, ...today], 2, now)).toEqual([150, 300])
+  })
+
+  it('takes the best hour of a day and reads a zero harvest as zero', () => {
+    expect(yieldHistoryFromPoints(hoursAgo(3, [100, 300, 900]), 10, now)).toEqual([900])
+    expect(yieldHistoryFromPoints(hoursAgo(3, [0, 0]), 10, now)).toEqual([0])
   })
 
   it('returns undefined when no day has data', () => {
     expect(yieldHistoryFromPoints([], 10, now)).toBeUndefined()
-    expect(yieldHistoryFromPoints([day(0, null)], 10, now)).toBeUndefined()
+    expect(yieldHistoryFromPoints(hoursAgo(3, [null]), 10, now)).toBeUndefined()
   })
 })
