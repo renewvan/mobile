@@ -1,7 +1,8 @@
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
+import { Check } from 'lucide-react-native'
 import { useState } from 'react'
-import { Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import { ensureNotificationPermission } from '@/alerts/notifications'
 import { AUTO_SLEEP_TIMEOUT_CHOICES, type AutoSleepTimeoutMinutes } from '@/bus/reducer'
@@ -30,6 +31,8 @@ import {
   POWER_LAYOUT_HINTS,
   POWER_LAYOUT_LABELS,
   START_WIDGET_IDS,
+  HEX_COLOR,
+  VAN_COLOR_PRESETS,
   VAN_FIELDS,
   VAN_LABELS,
   isDefaultLayout,
@@ -558,6 +561,74 @@ export function AboutView() {
   )
 }
 
+/** Black or white, whichever reads on the swatch's fill. */
+function checkColor(fill: string): string {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(fill.slice(i, i + 2), 16))
+  return r * 0.299 + g * 0.587 + b * 0.114 > 150 ? '#0f172a' : '#ffffff'
+}
+
+/**
+ * The van's colour on the map: swatches (the first is the default accent) and a typed `#rrggbb`
+ * for any other. An empty value is the default. shortcut: no colour wheel (needs a native
+ * module), upgrade if typing a hex proves a chore.
+ */
+function VanColor({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const { colors } = useTheme()
+  const [hex, setHex] = useState(value && !VAN_COLOR_PRESETS.includes(value) ? value : '')
+  const swatch = (fill: string, selected: boolean, label: string, onPress: () => void) => (
+    <Pressable
+      key={label}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: selected }}
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={[
+        vanColorStyles.swatch,
+        { backgroundColor: fill, borderColor: selected ? colors.foreground : colors.border },
+      ]}
+    >
+      {selected && <Check size={22} color={checkColor(fill)} strokeWidth={3} />}
+    </Pressable>
+  )
+  return (
+    <View style={vanColorStyles.root}>
+      <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: '500' }}>
+        Colour{' '}
+        <Text style={{ color: colors.muted, fontWeight: '400' }}>· {value || 'Default blue'}</Text>
+      </Text>
+      <View accessibilityRole="radiogroup" style={vanColorStyles.swatches}>
+        {swatch(colors.accent, value === '', 'Default blue', () => onChange(''))}
+        {VAN_COLOR_PRESETS.map((color) =>
+          swatch(color, value === color, color, () => onChange(color)),
+        )}
+      </View>
+      <NativeTextField
+        label="Custom colour (#rrggbb)"
+        defaultValue={hex}
+        error={hex !== '' && !HEX_COLOR.test(hex) ? 'Use the form #rrggbb.' : undefined}
+        onChangeText={(text) => {
+          const next = text.trim()
+          setHex(next)
+          if (HEX_COLOR.test(next)) onChange(next)
+        }}
+      />
+    </View>
+  )
+}
+
+const vanColorStyles = StyleSheet.create({
+  root: { gap: 8 },
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  swatch: {
+    width: 44,
+    height: 44,
+    borderWidth: 2,
+    borderRadius: 22, // a circle: half the size
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+})
+
 /** The van's details. Kept on this phone, as the dashboard keeps its own on the kiosk. */
 export function VanView() {
   const { van, update } = usePreferences()
@@ -572,6 +643,7 @@ export function VanView() {
             onChangeText={(text) => update({ van: { ...van, [field]: text.trim() } })}
           />
         ))}
+        <VanColor value={van.color} onChange={(color) => update({ van: { ...van, color } })} />
       </Box>
       <Note>
         Kept on this phone. The kiosk keeps its own copy in Settings › Van; the two are not shared

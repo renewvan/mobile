@@ -50,6 +50,7 @@ export function NativeTextField({
     <TextField isInvalid={Boolean(error)}>
       <Label>{label}</Label>
       <Input
+        variant="secondary"
         accessibilityLabel={label}
         value={value}
         onChangeText={(text) => {

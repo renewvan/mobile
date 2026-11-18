@@ -56,14 +56,36 @@ export interface Van {
   model: string
   kms: string
   plate: string
+  /** The van's colour on the map, `#rrggbb`; empty is the theme accent (the default blue). */
+  color: string
 }
-export const VAN_FIELDS: readonly (keyof Van)[] = ['name', 'brand', 'model', 'kms', 'plate']
+export const VAN_FIELDS: readonly Exclude<keyof Van, 'color'>[] = [
+  'name',
+  'brand',
+  'model',
+  'kms',
+  'plate',
+]
+
+/** Swatches Settings offers beside the default blue and a typed hex (the dashboard's list). */
+export const VAN_COLOR_PRESETS: readonly string[] = [
+  '#ef4444',
+  '#f97316',
+  '#eab308',
+  '#22c55e',
+  '#a855f7',
+  '#ec4899',
+  '#e5e7eb',
+  '#1f2937',
+]
+export const HEX_COLOR = /^#[0-9a-f]{6}$/i
 export const VAN_LABELS: Record<keyof Van, string> = {
   name: 'Name',
   brand: 'Brand',
   model: 'Model',
   kms: 'Kms.',
   plate: 'Plate',
+  color: 'Colour',
 }
 
 export interface Preferences {
@@ -89,7 +111,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   devicesSort: 'driver',
   powerLayout: 'van-tiles',
   alertsEnabled: true,
-  van: { name: '', brand: '', model: '', kms: '', plate: '' },
+  van: { name: '', brand: '', model: '', kms: '', plate: '', color: '' },
 }
 
 function isWidgetId(value: unknown): value is StartWidgetId {
@@ -135,6 +157,7 @@ export function parsePreferences(raw: string | null): Preferences {
       model: text(van.model),
       kms: text(van.kms),
       plate: text(van.plate),
+      color: HEX_COLOR.test(text(van.color)) ? text(van.color) : '',
     },
   }
 }
