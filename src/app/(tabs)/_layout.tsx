@@ -6,8 +6,8 @@ import { alpha, useTheme } from '@/theme'
  * Android), not one drawn in JavaScript.
  *
  * Android allows at most five tabs here, and the dashboard has more pages than that, so the
- * dashboard's Heater and Temperature pages share one tab, Climate. Alerts and Settings open from the
- * header as screens over the tabs.
+ * dashboard's Heater and Temperature pages share one tab, Climate. Settings opens from the
+ * header's Settings button as a screen over the tabs.
  */
 export default function TabsLayout() {
   const { colors } = useTheme()

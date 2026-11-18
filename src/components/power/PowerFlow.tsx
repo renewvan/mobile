@@ -233,7 +233,7 @@ const Wire = memo(function Wire({
 })
 
 /** Whether the phone asks apps to keep still (Settings › Accessibility › Remove animations). */
-function useReduceMotion(): boolean {
+export function useReduceMotion(): boolean {
   const [reduce, setReduce] = useState(false)
   useEffect(() => {
     let live = true

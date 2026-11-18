@@ -10,6 +10,7 @@ import { PowerFlow } from '@/components/power/PowerFlow'
 import { SOLAR_HISTORY_DAYS, SolarCard } from '@/components/power/SolarCard'
 import { Screen } from '@/components/Screen'
 import { openSettings } from '@/components/settings/routes'
+import { BatteryCard } from '@/components/start/BatteryCard'
 import { TemperaturesCard, TiltCard } from '@/components/start/StartCards'
 import { TankCard } from '@/components/tanks/TankCard'
 import { Card, EmptyState, MutedIcon, NoData, TitledCard } from '@/components/ui'
@@ -87,6 +88,8 @@ export default function StartTab() {
             )}
           </TitledCard>
         )
+      case 'battery':
+        return <BatteryCard batteries={batteries} selection={choice} />
       case 'heater': {
         const heaterId = Object.keys(heaters).sort()[0]
         return heaterId === undefined ? (
@@ -133,6 +136,8 @@ export default function StartTab() {
         return [colors]
       case 'energy':
         return [colors, flow, powerLayout]
+      case 'battery':
+        return [colors, batteries, choice]
       case 'heater':
         return [colors, heaters, heaterFrozen, commands]
       case 'solar':
