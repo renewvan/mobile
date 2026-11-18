@@ -18,7 +18,7 @@ design (every control has a plain React Native fallback), but iOS has not been r
 
 ## What it does
 
-Five tabs, in the platform's own tab bar:
+Five tabs, in the platform's own tab bar (the alert bell and Settings gear sit in the header):
 
 | Tab     | Content                                                                                                                                                                                                 |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -30,7 +30,7 @@ Five tabs, in the platform's own tab bar:
 
 Android's tab bar holds at most five tabs, so the dashboard's Heater and Temperature pages share
 the Climate tab, and Settings opens from the gear in the header as screens stacked over the tabs.
-Not in this version: Alerts, the weather forecast widget on Start, the heater timer, the solar
+Not in this version: the weather forecast widget on Start, the heater timer, the solar
 history charts that read InfluxDB, and the map's place name (the dashboard looks it up online;
 the app shows the coordinates).
 
@@ -50,6 +50,26 @@ header to MapLibre's requests to the hub and to no other host (`src/components/m
 A phone signed in before this version has no captured cookie and shows "Offline map
 unavailable" until it signs out and in again. A broker connection has no hub to serve the map.
 
+### Alerts
+
+The dashboard's alert log: the bell in the header (red, with a count, while any alert is open)
+opens the list, newest first. Alerts come from the bus, never from a threshold of the app's own:
+a tank whose `alarm_state` is `alarm`, a low starter battery, a lost hub connection and a
+Tailscale that is down. One opens when its condition starts and resolves when it ends; the row
+stays, marked Resolved. An open alert cannot be deleted (it would come straight back); a resolved
+one can, by its ✕ or all at once with Clear resolved. The log is kept on the phone, apart from the
+dashboard's. Demo mode raises none of its own and leaves the real van's alerts as they were.
+
+Each new alert is also a system notification (channel "Alerts"; tapping it opens the list), and
+Settings › General › Alerts switches that off. Muting only stops the notifications: the log still
+records. The first alert asks the phone for permission, as does switching the setting back on.
+
+These are **local** notifications: the app posts them while its process is alive and connected to
+the van (in front, or recently backgrounded). Android suspends a backgrounded app's socket, so a
+phone in a pocket for hours, or an app that was swiped away, hears nothing. Remote push (FCM) needs
+a sender on the hub watching the same topics and a registered token per phone; that does not exist
+yet.
+
 ### Settings
 
 The dashboard's Settings tree, for a phone:
@@ -59,7 +79,8 @@ The dashboard's Settings tree, for a phone:
 | Devices                        | Every Driver and what it publishes, by driver or by entity. Tanks (readings, icon), temperature sensors (name, unit, icon), relays (name, icon, group), the heater (controls switch, sensor), batteries with BMS details and the Primary battery, solar chargers, chargers, GPS with satellite signal, tilt (set level, reset) |
 | General                        | Firmware versions, About, the shared Demo mode switch                                                                                                                                                                                                                                                                          |
 | General › Display & Appearance | The app's theme, the Start tab's widgets (which, and in what order), the power diagram's layout (Van tiles or Van orbs), which sensors the Climate tab shows, and the Relays page's groups (add, rename, reorder, remove, order the relays inside one)                                                                         |
-| General › Kiosk display        | The van's touchscreen from anywhere: sleep or wake it, brightness, auto-sleep and its timeout                                                                                                                                                                                                                                  |
+| General › Alerts               | Whether a new alert is posted as a notification on this phone, and the way to the alert list                                                                                                                                                                                                                                   |
+| General › Dashboard            | The van's touchscreen from anywhere: sleep or wake it, brightness, auto-sleep and its timeout                                                                                                                                                                                                                                  |
 | Connectivity                   | The cellular router's signal and data use, the bus link and hub, Tailscale                                                                                                                                                                                                                                                     |
 | Van                            | The vehicle's details                                                                                                                                                                                                                                                                                                          |
 | Map                            | The full map: the van's position on the hub's offline basemap, with fix, satellites, speed and heading                                                                                                                                                                                                                         |
@@ -70,7 +91,7 @@ Two kinds of setting live there, and the screens say which is which:
 - **Shared, on the bus.** Names, units, icons, relay groups and order, the Primary battery, Demo
   mode, the heater's switches, the tilt level and the kiosk's display. Changing one here changes it
   for the dashboard and every other phone, with the same command the dashboard sends.
-- **This phone's own.** Theme, Start widgets, the power layout, hidden sensors, how Devices is sorted and the van's
+- **This phone's own.** Alert notifications, theme, Start widgets, the power layout, hidden sensors, how Devices is sorted and the van's
   details, kept in the phone's app storage. The dashboard keeps its equivalents in the kiosk
   browser's storage, which nothing remote can reach; there is no bus topic for them yet, so the
   kiosk's own layout choices (its theme, Start view, navigation position) cannot be changed from
@@ -119,6 +140,9 @@ phone"). Install that root on the phone as usual; the app is built to trust user
 - `src/components/settings/` — the Settings screens: one route (`/settings/[view]`) draws every
   view (`SettingsViewScreen.tsx`), built from the rows in `kit.tsx` under the platform's own app
   bar. `routes.ts` names the views.
+- `src/alerts/` — the alert log: what opens and resolves an alert (`alertLog.ts`, pure and
+  tested), its storage and the diff against the bus (`AlertsProvider.tsx`), and the notifications
+  (`notifications.ts`). The list is `components/alerts/AlertsScreen.tsx`, route `/alerts`.
 - `src/preferences/` — the phone's own settings: what they are and how they are read back
   (`preferences.ts`, pure and tested) and where they are kept (`PreferencesProvider.tsx`).
 - `src/theme/` — the dashboard's light and dark palette as hex; the app follows the phone's
@@ -195,6 +219,8 @@ Not yet verified, and worth doing before relying on it:
 
 - A real hub over HTTPS: installing Caddy's root on a phone and signing in with the real login.
 - A physical phone, on the van's Wi-Fi and over Tailscale, including walking out of range and back.
+- Alerts on a real van, and the notifications on a physical phone (Android 13+ permission prompt,
+  channel, tap-through). The log logic is covered by tests; the screens and notifications are not.
 - A real relay board and a real heater. Command topics and payloads are the dashboard's.
 - The Settings commands against the real hub plugins and Drivers (relay groups and names, icons,
   temperature names and units, tilt level, Primary battery, the kiosk display). On the emulator

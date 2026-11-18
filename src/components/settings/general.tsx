@@ -2,6 +2,8 @@ import Constants from 'expo-constants'
 import { router } from 'expo-router'
 import { useState } from 'react'
 import { Text, View } from 'react-native'
+import { useAlerts } from '@/alerts/AlertsProvider'
+import { ensureNotificationPermission } from '@/alerts/notifications'
 import { AUTO_SLEEP_TIMEOUT_CHOICES, type AutoSleepTimeoutMinutes } from '@/bus/reducer'
 import { confirm, NativeButton, NativeSlider, NativeTextField } from '@/components/native'
 import { tabular } from '@/components/ui'
@@ -28,16 +30,15 @@ import {
   POWER_LAYOUT_HINTS,
   POWER_LAYOUT_LABELS,
   START_WIDGET_IDS,
-  START_WIDGET_LABELS,
   VAN_FIELDS,
   VAN_LABELS,
   isDefaultLayout,
-  moved,
   type ThemeChoice,
 } from '@/preferences/preferences'
 import { useSession } from '@/session/SessionProvider'
 import { useTheme } from '@/theme'
 import { leaveScreen } from './devices'
+import { WidgetList } from './WidgetList'
 import {
   Box,
   ChoiceRow,
@@ -59,8 +60,26 @@ import { useSettingsData } from './useSettingsData'
 
 export function GeneralView() {
   const { demoMode, commands } = useSettingsData()
+  const { alertsEnabled } = usePreferences()
   return (
     <>
+      <Group title="Preferences">
+        <NavRow
+          label="Display & Appearance"
+          description="Theme, widgets, pages"
+          onPress={() => openSettings('display')}
+        />
+        <NavRow
+          label="Dashboard"
+          description="Screen power, brightness, auto-sleep"
+          onPress={() => openSettings('kiosk')}
+        />
+        <NavRow
+          label="Alerts"
+          description={alertsEnabled ? 'Notifications on' : 'Notifications off'}
+          onPress={() => openSettings('alerts')}
+        />
+      </Group>
       <Group title="System">
         <NavRow
           label="Firmware"
@@ -81,18 +100,43 @@ export function GeneralView() {
           van while it is on, and no command reaches the real one.
         </Note>
       </Group>
-      <Group title="Preferences">
-        <NavRow
-          label="Display & Appearance"
-          description="Theme, widgets, pages"
-          onPress={() => openSettings('display')}
-        />
-        <NavRow
-          label="Kiosk display"
-          description="Screen power, brightness, auto-sleep"
-          onPress={() => openSettings('kiosk')}
-        />
+    </>
+  )
+}
+
+/** Whether a new alert is posted as a notification on this phone. The Alerts screen keeps the log either way. */
+export function AlertsView() {
+  const { alertsEnabled, update } = usePreferences()
+  const { openCount } = useAlerts()
+  const [blocked, setBlocked] = useState(false)
+  const set = async (on: boolean) => {
+    // Switching on asks the phone for permission; refused, it stays off rather than claim to notify.
+    const granted = !on || (await ensureNotificationPermission().catch(() => false))
+    setBlocked(!granted)
+    update({ alertsEnabled: granted ? on : false })
+  }
+  return (
+    <>
+      <Group
+        title="Notifications"
+        note="This phone's own choice. Alerts are still recorded on the Alerts screen while this is off."
+      >
+        <Box>
+          <SwitchRow
+            label="Show alert notifications"
+            description={openCount === 1 ? '1 alert open now' : `${openCount} alerts open now`}
+            value={alertsEnabled}
+            onChange={(on) => void set(on)}
+          />
+        </Box>
+        {blocked && (
+          <Note tone="danger">
+            Notifications are blocked for renewvan. Allow them in the phone&apos;s app settings,
+            then switch this on again.
+          </Note>
+        )}
       </Group>
+      <NavRow label="Alert history" onPress={() => router.push('/alerts')} />
     </>
   )
 }
@@ -172,40 +216,17 @@ export function PowerPageView() {
   )
 }
 
-/** The Start tab's widgets: which are shown, and in what order. */
+/** The Start tab's widgets: shown or hidden, and in what order, by dragging or by the switch. */
 export function WidgetsView() {
   const { startLayout: layout, update } = usePreferences()
   const set = (next: typeof layout) => update({ startLayout: next })
   return (
     <>
-      <Note>Choose what the Start tab shows, and in what order.</Note>
-      <Group title="On the Start tab">
-        {layout.length === 0 ? (
-          <Empty>No widgets. Switch one on below.</Empty>
-        ) : (
-          layout.map((id, i) => (
-            <MoveRow
-              key={id}
-              label={START_WIDGET_LABELS[id]}
-              description={`Position ${i + 1} of ${layout.length}`}
-              onUp={i === 0 ? undefined : () => set(moved(layout, i, i - 1))}
-              onDown={i === layout.length - 1 ? undefined : () => set(moved(layout, i, i + 1))}
-            />
-          ))
-        )}
-      </Group>
-      <Group title="Show">
-        <Box>
-          {START_WIDGET_IDS.map((id) => (
-            <SwitchRow
-              key={id}
-              label={START_WIDGET_LABELS[id]}
-              value={layout.includes(id)}
-              onChange={(on) => set(on ? [...layout, id] : layout.filter((w) => w !== id))}
-            />
-          ))}
-        </Box>
-      </Group>
+      <Note>
+        Choose what the Start tab shows. Hold a grip and drag to reorder; drop a widget above the
+        line to show it, below to hide it.
+      </Note>
+      <WidgetList layout={layout} onChange={set} />
       <NativeButton
         label="Reset to default"
         variant="outlined"

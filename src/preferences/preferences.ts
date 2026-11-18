@@ -77,6 +77,8 @@ export interface Preferences {
   devicesSort: DevicesSort
   /** The Power tab's diagram, and the Start tab's Energy widget, which draws the same one. */
   powerLayout: PowerLayout
+  /** Whether a new alert is posted as a system notification. The Alerts screen records them either way. */
+  alertsEnabled: boolean
   van: Van
 }
 
@@ -86,6 +88,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   hiddenTemperatures: [],
   devicesSort: 'driver',
   powerLayout: 'van-tiles',
+  alertsEnabled: true,
   van: { name: '', brand: '', model: '', kms: '', plate: '' },
 }
 
@@ -125,6 +128,7 @@ export function parsePreferences(raw: string | null): Preferences {
       : [],
     devicesSort: stored.devicesSort === 'entity' ? 'entity' : 'driver',
     powerLayout: stored.powerLayout === 'van-orbs' ? 'van-orbs' : 'van-tiles',
+    alertsEnabled: stored.alertsEnabled !== false,
     van: {
       name: text(van.name),
       brand: text(van.brand),
@@ -143,6 +147,28 @@ export function moved<T>(list: readonly T[], from: number, to: number): readonly
   const [item] = next.splice(from, 1)
   next.splice(to, 0, item)
   return next
+}
+
+/** The Widgets screen's slots: the shown widgets in order, a divider, then the hidden ones as shipped. */
+export function widgetSlots(layout: readonly StartWidgetId[]): (StartWidgetId | 'divider')[] {
+  return [...layout, 'divider', ...START_WIDGET_IDS.filter((id) => !layout.includes(id))]
+}
+
+/**
+ * The layout after the widget in slot `from` is dropped on slot `to`: whatever lands above the
+ * divider is shown, in that order. The same `layout` when nothing changes (the divider cannot be
+ * dragged, and the hidden widgets have no order of their own).
+ */
+export function layoutAfterDrop(
+  layout: readonly StartWidgetId[],
+  from: number,
+  to: number,
+): readonly StartWidgetId[] {
+  const slots = widgetSlots(layout)
+  if (slots[from] === 'divider') return layout
+  const next = moved(slots, from, to)
+  const shown = next.slice(0, next.indexOf('divider')) as StartWidgetId[]
+  return shown.length === layout.length && shown.every((id, i) => id === layout[i]) ? layout : shown
 }
 
 export function isDefaultLayout(layout: readonly StartWidgetId[]): boolean {

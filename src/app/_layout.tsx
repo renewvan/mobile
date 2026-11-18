@@ -6,6 +6,7 @@ import { HeroUINativeProvider } from 'heroui-native'
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { AlertsProvider } from '@/alerts/AlertsProvider'
 import { ConfirmHost } from '@/components/native'
 import { RenewvanBusProvider } from '@/bus/RenewvanBusProvider'
 import { PreferencesProvider } from '@/preferences/PreferencesProvider'
@@ -53,19 +54,25 @@ function Root() {
   const signedIn = session.status === 'ready'
   return (
     <RenewvanBusProvider config={session.connection?.config ?? null}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
-      >
-        <Stack.Protected guard={signedIn}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="settings/index" />
-          <Stack.Screen name="settings/[view]" />
-        </Stack.Protected>
-        <Stack.Protected guard={!signedIn}>
-          <Stack.Screen name="sign-in" options={{ animation: 'fade' }} />
-        </Stack.Protected>
-      </Stack>
+      <AlertsProvider>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
+          <Stack.Protected guard={signedIn}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="alerts" />
+            <Stack.Screen name="settings/index" />
+            <Stack.Screen name="settings/[view]" />
+          </Stack.Protected>
+          <Stack.Protected guard={!signedIn}>
+            <Stack.Screen name="sign-in" options={{ animation: 'fade' }} />
+          </Stack.Protected>
+        </Stack>
+      </AlertsProvider>
     </RenewvanBusProvider>
   )
 }

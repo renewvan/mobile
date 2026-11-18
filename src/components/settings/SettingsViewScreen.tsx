@@ -21,6 +21,7 @@ import {
 } from './devices'
 import {
   AboutView,
+  AlertsView,
   ConnectionView,
   DisplayView,
   FirmwareView,
@@ -57,7 +58,8 @@ const TITLES: Record<SettingsView, string> = {
   firmware: 'Firmware',
   about: 'About',
   display: 'Display & Appearance',
-  kiosk: 'Kiosk display',
+  kiosk: 'Dashboard',
+  alerts: 'Alerts',
   widgets: 'Widgets',
   'power-page': 'Power page',
   'temperature-page': 'Temperature page',
@@ -155,6 +157,8 @@ function content(view: SettingsView, id: string): ReactNode {
       return <DisplayView />
     case 'kiosk':
       return <KioskView />
+    case 'alerts':
+      return <AlertsView />
     case 'widgets':
       return <WidgetsView />
     case 'power-page':
