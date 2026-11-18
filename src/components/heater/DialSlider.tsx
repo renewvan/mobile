@@ -12,14 +12,15 @@ import {
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg'
 import { useScrollLock } from '@/components/Screen'
 import { tabular } from '@/components/ui'
-import { alpha, useTheme } from '@/theme'
-import { arc, CENTRE, point, START_DEG, SWEEP_DEG, valueAt } from './dialGeometry'
+import { alpha, radius, useTheme } from '@/theme'
+import { band, CENTRE, PAD_DEG, point, START_DEG, STROKE, SWEEP_DEG, valueAt } from './dialGeometry'
 
-const STROKE = 20
 /** The glow's disc: inset 14% from the edge of the 200-unit drawing. */
 const GLOW_R = 72
 /** The dial's drawn size on screen. */
 const SIZE = 264
+/** The track's ends take the dashboard's 4px `--radius`, in the 200-unit drawing's units. */
+const CORNER_R = 4 / (SIZE / 200)
 
 export interface DialSliderProps {
   label: string
@@ -156,31 +157,22 @@ export function DialSlider({
             </Defs>
             <Circle cx={CENTRE} cy={CENTRE} r={GLOW_R} fill="url(#dial-glow)" />
             <Path
-              d={arc(START_DEG, SWEEP_DEG)}
-              fill="none"
-              stroke={colors.border}
-              strokeWidth={STROKE}
-              strokeLinecap="round"
+              d={band(START_DEG - PAD_DEG, SWEEP_DEG + 2 * PAD_DEG, true, true, CORNER_R)}
+              fill={colors.border}
             />
-            {shown !== undefined && target > 0 && (
+            {shown !== undefined && (
               <Path
-                d={arc(START_DEG, target)}
-                fill="none"
-                stroke={tone}
-                strokeWidth={STROKE}
-                strokeLinecap="round"
+                d={band(START_DEG - PAD_DEG, target + PAD_DEG, true, true, CORNER_R)}
+                fill={tone}
                 opacity={off ? 0.6 : 1}
               />
             )}
             {shown !== undefined && dimTo > 0 && (
               <>
                 <Path
-                  d={arc(START_DEG, dimTo)}
-                  fill="none"
-                  stroke={colors.background}
-                  strokeOpacity={0.45}
-                  strokeWidth={STROKE}
-                  strokeLinecap="round"
+                  d={band(START_DEG - PAD_DEG, dimTo + PAD_DEG, true, false, CORNER_R)}
+                  fill={colors.background}
+                  fillOpacity={0.45}
                 />
                 <Circle cx={markX} cy={markY} r={4} fill={colors.background} fillOpacity={0.6} />
               </>
@@ -241,7 +233,7 @@ export function DialSlider({
               accessibilityLabel={name}
               accessibilityState={{ disabled: blocked }}
               disabled={blocked}
-              android_ripple={{ color: colors.default, borderless: true, radius: 22 }}
+              android_ripple={{ color: colors.default }}
               onPress={() => step(delta)}
               style={[styles.step, { borderColor: colors.border, opacity: blocked ? 0.4 : 1 }]}
             >
@@ -279,7 +271,7 @@ const styles = StyleSheet.create({
   step: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius['3xl'],
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

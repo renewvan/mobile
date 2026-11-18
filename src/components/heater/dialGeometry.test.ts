@@ -1,4 +1,4 @@
-import { valueAt } from './dialGeometry'
+import { band, valueAt } from './dialGeometry'
 
 // The dial is a 270° arc that opens at the bottom: it starts bottom-left (135°) and ends
 // bottom-right. `valueAt` turns a touch inside the dial's square into a value on that arc.
@@ -27,5 +27,20 @@ describe('valueAt', () => {
 
   it('works on a power-level range too', () => {
     expect(valueAt(100, 0, SIZE, 1, 9)).toBe(5)
+  })
+})
+
+// The track is a filled band, not a stroked arc, so its ends can take the app's corner radius.
+describe('band', () => {
+  it('keeps an unrounded end exactly on its angle, and a rounded end short of it', () => {
+    // The outer edge at 135° (bottom left) of the 90-unit outer radius.
+    expect(band(135, 270, false, false, 3).startsWith('M 36.36 163.64')).toBe(true)
+    expect(band(135, 270, true, false, 3).startsWith('M 36.36 163.64')).toBe(false)
+  })
+
+  it('closes into one shape with a rounded corner at each rounded end', () => {
+    const d = band(135, 100, true, true, 3)
+    expect(d.endsWith('Z')).toBe(true)
+    expect(d.match(/ A 3 3 /g)).toHaveLength(4)
   })
 })
