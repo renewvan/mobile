@@ -6,6 +6,7 @@ import { HeroUINativeProvider } from 'heroui-native'
 import { useEffect } from 'react'
 import { View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { ConfirmHost } from '@/components/native'
 import { RenewvanBusProvider } from '@/bus/RenewvanBusProvider'
 import { PreferencesProvider } from '@/preferences/PreferencesProvider'
 import { SessionProvider, useSession } from '@/session/SessionProvider'
@@ -19,13 +20,15 @@ import { useTheme } from '@/theme'
  */
 export default function RootLayout() {
   // HeroUI Native draws the form controls (`src/components/native`), themed by `src/global.css`.
-  // Its toasts are off: the app shows none, and a command's outcome is read from the bus.
+  // Its toasts report a heater command the heater never confirmed, as the dashboard does; every
+  // other outcome is read from the bus.
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <HeroUINativeProvider config={{ toast: false }}>
+      <HeroUINativeProvider>
         <PreferencesProvider>
           <SessionProvider>
             <Root />
+            <ConfirmHost />
           </SessionProvider>
         </PreferencesProvider>
       </HeroUINativeProvider>

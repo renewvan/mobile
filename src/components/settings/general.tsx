@@ -1,9 +1,9 @@
 import Constants from 'expo-constants'
 import { router } from 'expo-router'
 import { useState } from 'react'
-import { Alert, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { AUTO_SLEEP_TIMEOUT_CHOICES, type AutoSleepTimeoutMinutes } from '@/bus/reducer'
-import { NativeButton, NativeSlider, NativeTextField } from '@/components/native'
+import { confirm, NativeButton, NativeSlider, NativeTextField } from '@/components/native'
 import { tabular } from '@/components/ui'
 import { panelsFor } from '@/config/relayPanels'
 import { classifyHost, hubRouteText } from '@/lib/hubAddress'
@@ -346,18 +346,17 @@ export function RelayGroupView({ id: name }: { id: string }) {
   }
 
   const remove = () =>
-    Alert.alert(`Remove ${name}?`, 'Its relays are not deleted: they show under Unassigned.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove group',
-        style: 'destructive',
-        onPress: () => {
-          for (const relayId of membersOf(name)) commands.setRelayGroup(relayId, null)
-          commands.setRelayGroupList(withoutRelayGroup(list, name))
-          leaveScreen()
-        },
+    confirm({
+      title: `Remove ${name}?`,
+      message: 'Its relays are not deleted: they show under Unassigned.',
+      action: 'Remove group',
+      destructive: true,
+      onConfirm: () => {
+        for (const relayId of membersOf(name)) commands.setRelayGroup(relayId, null)
+        commands.setRelayGroupList(withoutRelayGroup(list, name))
+        leaveScreen()
       },
-    ])
+    })
 
   const moveRelay = (from: number, to: number) => {
     if (panel === undefined) return
@@ -574,11 +573,14 @@ export function ConnectionView() {
   } catch {
     // an address that does not parse shows as unknown
   }
-  const confirm = () =>
-    Alert.alert('Sign out?', 'This phone forgets the van. You will need its address again.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => void signOut() },
-    ])
+  const askSignOut = () =>
+    confirm({
+      title: 'Sign out?',
+      message: 'This phone forgets the van. You will need its address again.',
+      action: 'Sign out',
+      destructive: true,
+      onConfirm: () => void signOut(),
+    })
   return (
     <>
       <DetailList heading="This phone">
@@ -609,7 +611,7 @@ export function ConnectionView() {
         <DetailRow label="Hostname" value={hubStatus?.hostname ?? null} />
         <DetailRow label="Version" value={hubStatus?.version ?? null} />
       </DetailList>
-      <NativeButton label="Sign out" variant="danger" onPress={confirm} />
+      <NativeButton label="Sign out" variant="danger" onPress={askSignOut} />
     </>
   )
 }

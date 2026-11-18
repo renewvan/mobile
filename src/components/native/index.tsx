@@ -161,3 +161,5 @@ export function NativeSlider({
     </Slider>
   )
 }
+
+export { confirm, ConfirmHost } from './Confirm'

@@ -110,8 +110,8 @@ phone"). Install that root on the phone as usual; the app is built to trust user
   choice and the slider, all HeroUI Native (`heroui-native`, the native sibling of the dashboard's
   HeroUI). Uniwind compiles `src/global.css`, which carries the dashboard's theme tokens and its
   4px `--radius`, so both apps draw the same colours and corners.
-  Confirmations are the platform's own dialogs, failures its own toasts, and the dial ticks the
-  phone's haptics.
+  Confirmations are HeroUI dialogs (`confirm`, mounted once by `ConfirmHost`), a heater command the
+  heater never confirms is a HeroUI toast, and the dial ticks the phone's haptics.
 - `src/components/<domain>/` — the cards each tab stacks. Gauges, the dial, the van diagram and
   the charts are drawn with `react-native-svg`.
 - `src/lib/`, `src/types.ts`, `flowModel.ts`, `tankView.ts`, `solarView.ts` — copied from the

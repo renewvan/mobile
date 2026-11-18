@@ -1,6 +1,6 @@
 import { Power } from 'lucide-react-native'
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native'
-import { Segmented } from '@/components/native'
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
+import { confirm, Segmented } from '@/components/native'
 import { Banner, Card } from '@/components/ui'
 import { criticalRelayIds, panelsFor } from '@/config/relayPanels'
 import { EntityIcon } from '@/components/EntityIcon'
@@ -134,12 +134,13 @@ export function RelayPanels({
   const pick = (id: string, to: boolean) => {
     if (!criticalIds.includes(id)) return request(id, to)
     const verb = to ? 'on' : 'off'
-    // The platform's own dialog. `request` re-checks `frozen`, so a prompt left open while the
+    // `request` re-checks `frozen`, so a prompt left open while the
     // Driver drops sends nothing.
-    Alert.alert(`Switch ${verb} ${relays[id].name ?? id}?`, undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: `Switch ${verb}`, onPress: () => request(id, to) },
-    ])
+    confirm({
+      title: `Switch ${verb} ${relays[id].name ?? id}?`,
+      action: `Switch ${verb}`,
+      onConfirm: () => request(id, to),
+    })
   }
 
   return (

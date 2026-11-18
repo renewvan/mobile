@@ -9,9 +9,9 @@ import {
   type LucideIcon,
 } from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 import type { Commands } from '@/bus/commands'
-import { NativeButton, NativeSwitch } from '@/components/native'
+import { confirm, NativeButton, NativeSwitch } from '@/components/native'
 import { Card, CardHeader, tabular } from '@/components/ui'
 import { useNow } from '@/hooks/useNow'
 import {
@@ -203,22 +203,17 @@ export function HeaterCard({ id, heater, frozen, commands, showReadings = true }
         : statusLine(heater, current)
 
   const confirmStart = () => {
-    Alert.alert(
-      armed ? `Start ventilation on ${label}?` : `Start ${label}?`,
-      startSummary(heater, current),
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: armed ? 'Start ventilation' : 'Start',
-          onPress: () => {
-            if (armed) {
-              setVentilationChosen(false)
-              send('run', () => commands.setHeaterVentilating(id, true))
-            } else send('run', () => commands.setHeaterRunning(id, true))
-          },
-        },
-      ],
-    )
+    confirm({
+      title: armed ? `Start ventilation on ${label}?` : `Start ${label}?`,
+      message: startSummary(heater, current),
+      action: armed ? 'Start ventilation' : 'Start',
+      onConfirm: () => {
+        if (armed) {
+          setVentilationChosen(false)
+          send('run', () => commands.setHeaterVentilating(id, true))
+        } else send('run', () => commands.setHeaterRunning(id, true))
+      },
+    })
   }
 
   const pickMode = (next: OperatingMode) => {
@@ -227,17 +222,16 @@ export function HeaterCard({ id, heater, frozen, commands, showReadings = true }
     const block = modeSwitchBlock(heater, current, next)
     if (block === undefined) return applyMode(next)
     const name = OPERATING_MODES.find((m) => m.key === next)?.label
-    Alert.alert(`Switch to ${name}?`, `${block} Stop the heater first?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Stop heater',
-        style: 'destructive',
-        onPress: () => {
-          afterStop.current = next
-          send('run', () => commands.setHeaterRunning(id, false))
-        },
+    confirm({
+      title: `Switch to ${name}?`,
+      message: `${block} Stop the heater first?`,
+      action: 'Stop heater',
+      destructive: true,
+      onConfirm: () => {
+        afterStop.current = next
+        send('run', () => commands.setHeaterRunning(id, false))
       },
-    ])
+    })
   }
 
   const runBusy = run !== undefined && !run.failed
