@@ -150,6 +150,17 @@ phone"). Install that root on the phone as usual; the app is built to trust user
 - `src/theme/` — the dashboard's light and dark palette as hex; the app follows the phone's
   setting unless Settings says Light or Dark.
 
+## App icon and colors
+
+Both come from the dashboard (its README, "Brand colors and assets"). Do not tune them here.
+
+- Colors: `src/global.css` is the dashboard's theme tokens and `src/theme/index.ts` the same palette as hex (UI accent `#0485f7`, from `oklch(62.04% 0.195 253.83)`). The brand blue of the artwork is `#0385f7`, a hair apart from the accent.
+- `assets/icon.png` (1024, iOS and legacy Android): `symbol-white.svg` on `#0385f7`, the van 72% of the width, the same layout as the dashboard's `icon-512.png`.
+- `assets/android-icon-foreground.png` (1024, transparent): the dashboard's maskable layout scaled into Android's adaptive-icon safe area. Android shows the middle 72/108 of the canvas, so the van is 41% of the width, 72% of the launcher circle's radius. At 55% it reached 97% and nearly touched the circle.
+- `assets/android-icon-monochrome.png` (432): same layout, used for themed icons and as the notification icon (`app.json`).
+- The adaptive icon's `backgroundColor` in `app.json` is `#0385f7`.
+- Re-render these from the dashboard SVGs rather than editing them. `android/` is generated, so run `npx expo prebuild --clean` after changing an icon or its color.
+
 ## mqtt.js on React Native
 
 `mqtt` (the same client the dashboard uses) expects Node-ish `Buffer`/`URL` globals not present in
