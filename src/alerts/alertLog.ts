@@ -22,6 +22,8 @@ export interface AlertEntry extends AlertContent {
   createdAt: number
   /** Set once the condition cleared; absent while the alert is open. */
   resolvedAt?: number
+  /** Deleted by the user while still open: off the list, but kept so it is not raised again until it clears. */
+  dismissed?: boolean
 }
 
 export const MQTT_KEY = 'mqtt-connection'
@@ -108,13 +110,14 @@ export function reconcile(
 ): { entries: AlertEntry[]; opened: AlertEntry[]; resolved: AlertEntry[] } {
   const open = new Set<string>()
   const resolved: AlertEntry[] = []
-  const next = entries.map((entry) => {
-    if (entry.resolvedAt !== undefined) return entry
+  const next = entries.flatMap((entry) => {
+    if (entry.resolvedAt !== undefined) return [entry]
     open.add(entry.key)
-    if (entry.key in desired || isFrozen(entry.key, flags)) return entry
+    if (entry.key in desired || isFrozen(entry.key, flags)) return [entry]
     const closed = { ...entry, resolvedAt: now }
     resolved.push(closed)
-    return closed
+    // A dismissed alert was already taken off the list: its end needs no row.
+    return entry.dismissed ? [] : [closed]
   })
   const opened = Object.entries(desired)
     .filter(([key]) => !open.has(key))
@@ -142,6 +145,28 @@ export function parseAlertLog(raw: string | null): AlertEntry[] {
       typeof e.title === 'string' &&
       typeof e.description === 'string' &&
       typeof e.createdAt === 'number' &&
-      (e.resolvedAt === undefined || typeof e.resolvedAt === 'number'),
+      (e.resolvedAt === undefined || typeof e.resolvedAt === 'number') &&
+      (e.dismissed === undefined || typeof e.dismissed === 'boolean'),
   )
+}
+
+/** The log changes only through these: set whole (bus diff, stored copy, sign-out), or pruned by the user. */
+export type AlertAction =
+  | { type: 'set'; entries: AlertEntry[] }
+  | { type: 'remove'; id: string }
+  | { type: 'clearResolved' }
+
+/** Deleting a resolved alert drops it; deleting an open one only dismisses it (see `AlertEntry.dismissed`). */
+export function logReducer(entries: AlertEntry[], action: AlertAction): AlertEntry[] {
+  switch (action.type) {
+    case 'set':
+      return action.entries
+    case 'remove':
+      return entries.flatMap((e) => {
+        if (e.id !== action.id) return [e]
+        return e.resolvedAt === undefined ? [{ ...e, dismissed: true }] : []
+      })
+    case 'clearResolved':
+      return entries.filter((e) => e.resolvedAt === undefined)
+  }
 }

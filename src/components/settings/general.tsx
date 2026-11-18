@@ -136,7 +136,6 @@ export function AlertsView() {
           </Note>
         )}
       </Group>
-      <NavRow label="Alert history" onPress={() => router.push('/alerts')} />
     </>
   )
 }

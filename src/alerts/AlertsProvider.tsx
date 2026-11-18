@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { usePreferences } from '@/preferences/PreferencesProvider'
 import { useSession } from '@/session/SessionProvider'
-import { desiredAlerts, parseAlertLog, reconcile, type AlertEntry } from './alertLog'
+import { desiredAlerts, logReducer, parseAlertLog, reconcile, type AlertEntry } from './alertLog'
 import { dismissAlert, notifyAlert, useOpenAlertsOnTap } from './notifications'
 
 // The alert log, kept on the phone and kept current from the bus: the dashboard's alert history
@@ -17,31 +17,14 @@ const STORAGE_KEY = 'renewvan.alertHistory.v1'
 const SETTLE_MS = 3000
 
 interface AlertsValue {
-  /** Newest first. */
+  /** What the list shows, newest first: the log without the alerts the user deleted while open. */
   entries: AlertEntry[]
-  /** Alerts whose condition still holds. */
+  /** Alerts whose condition still holds and that have not been deleted. */
   openCount: number
-  /** Deletes one resolved alert; an open one would only be raised again at once. */
+  /** Deletes one alert. An open one stays quiet until its condition clears, then may come back. */
   remove: (id: string) => void
   /** Deletes every resolved alert. */
   clearResolved: () => void
-}
-
-/** The log changes only here: set whole by the bus diff or the stored copy, or pruned by the user. */
-type Action =
-  | { type: 'set'; entries: AlertEntry[] }
-  | { type: 'remove'; id: string }
-  | { type: 'clearResolved' }
-
-function logReducer(entries: AlertEntry[], action: Action): AlertEntry[] {
-  switch (action.type) {
-    case 'set':
-      return action.entries
-    case 'remove':
-      return entries.filter((e) => e.id !== action.id || e.resolvedAt === undefined)
-    case 'clearResolved':
-      return entries.filter((e) => e.resolvedAt === undefined)
-  }
 }
 
 const AlertsContext = createContext<AlertsValue | null>(null)
@@ -89,15 +72,24 @@ export function AlertsProvider({ children }: { children: ReactNode }) {
     if (alertsEnabled) for (const entry of next.opened) notifyAlert(entry).catch(() => {})
   })
 
-  const value = useMemo<AlertsValue>(
-    () => ({
-      entries,
-      openCount: entries.filter((e) => e.resolvedAt === undefined).length,
-      remove: (id) => dispatch({ type: 'remove', id }),
+  // Another van's alerts are not this one's: signing out forgets the log along with the van.
+  useEffect(() => {
+    if (loaded && connection === null) dispatch({ type: 'set', entries: [] })
+  }, [loaded, connection])
+
+  const value = useMemo<AlertsValue>(() => {
+    const visible = entries.filter((e) => !e.dismissed)
+    return {
+      entries: visible,
+      openCount: visible.filter((e) => e.resolvedAt === undefined).length,
+      remove: (id) => {
+        const entry = entries.find((e) => e.id === id)
+        if (entry) dismissAlert(entry).catch(() => {})
+        dispatch({ type: 'remove', id })
+      },
       clearResolved: () => dispatch({ type: 'clearResolved' }),
-    }),
-    [entries],
-  )
+    }
+  }, [entries])
   return <AlertsContext.Provider value={value}>{children}</AlertsContext.Provider>
 }
 

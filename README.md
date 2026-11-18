@@ -56,9 +56,11 @@ The dashboard's alert log: the bell in the header (red, with a count, while any 
 opens the list, newest first. Alerts come from the bus, never from a threshold of the app's own:
 a tank whose `alarm_state` is `alarm`, a low starter battery, a lost hub connection and a
 Tailscale that is down. One opens when its condition starts and resolves when it ends; the row
-stays, marked Resolved. An open alert cannot be deleted (it would come straight back); a resolved
-one can, by its ✕ or all at once with Clear resolved. The log is kept on the phone, apart from the
-dashboard's. Demo mode raises none of its own and leaves the real van's alerts as they were.
+stays, marked Resolved. Any alert can be deleted, by sliding it left or by its ✕; Clear resolved
+deletes every resolved one at once. Deleting an open alert only hides it: it stays quiet until its
+condition clears, so it is not raised again at once. The log is kept on the phone, apart from the
+dashboard's, and is forgotten on sign-out (another van's alerts are not this one's). Demo mode
+raises none of its own and leaves the real van's alerts as they were.
 
 Each new alert is also a system notification (channel "Alerts"; tapping it opens the list), and
 Settings › General › Alerts switches that off. Muting only stops the notifications: the log still

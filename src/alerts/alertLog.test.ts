@@ -1,4 +1,11 @@
-import { desiredAlerts, isFrozen, parseAlertLog, reconcile, type AlertEntry } from './alertLog'
+import {
+  desiredAlerts,
+  isFrozen,
+  logReducer,
+  parseAlertLog,
+  reconcile,
+  type AlertEntry,
+} from './alertLog'
 import type { RenewvanBusState } from '@/types'
 
 const tank = {
@@ -103,6 +110,16 @@ describe('reconcile', () => {
     expect(demo.entries).toBe(entries)
   })
 
+  it('does not raise a deleted open alert again, and drops it without a row once it clears', () => {
+    const { entries } = reconcile([], { 'tank:t1': content }, live, 100)
+    const deleted = logReducer(entries, { type: 'remove', id: entries[0].id })
+    const still = reconcile(deleted, { 'tank:t1': content }, live, 200)
+    expect(still.opened).toEqual([])
+    const cleared = reconcile(deleted, {}, live, 300)
+    expect(cleared.entries).toEqual([])
+    expect(cleared.resolved).toHaveLength(1)
+  })
+
   it('keeps at most 200 rows', () => {
     const many: AlertEntry[] = Array.from({ length: 200 }, (_, i) => ({
       ...content,
@@ -132,5 +149,30 @@ describe('parseAlertLog', () => {
     expect(parseAlertLog(null)).toEqual([])
     expect(parseAlertLog('not json')).toEqual([])
     expect(parseAlertLog('{"a":1}')).toEqual([])
+  })
+})
+
+describe('logReducer', () => {
+  const row = (id: string, resolvedAt?: number): AlertEntry => ({
+    id,
+    key: `tank:${id}`,
+    type: 'error',
+    title: 't',
+    description: 'd',
+    createdAt: 1,
+    resolvedAt,
+  })
+  const log = [row('open'), row('done', 5)]
+
+  it('drops a resolved alert, and only hides an open one so it is not raised again at once', () => {
+    expect(logReducer(log, { type: 'remove', id: 'done' })).toEqual([row('open')])
+    expect(logReducer(log, { type: 'remove', id: 'open' })).toEqual([
+      { ...row('open'), dismissed: true },
+      row('done', 5),
+    ])
+  })
+
+  it('clears every resolved alert and keeps the open ones', () => {
+    expect(logReducer(log, { type: 'clearResolved' })).toEqual([row('open')])
   })
 })

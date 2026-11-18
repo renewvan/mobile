@@ -1,5 +1,6 @@
-import { Bell, CircleAlert, TriangleAlert, X } from 'lucide-react-native'
+import { Bell, CircleAlert, Trash2, TriangleAlert, X } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import type { AlertEntry } from '@/alerts/alertLog'
 import { confirm, NativeButton } from '@/components/native'
@@ -20,7 +21,7 @@ function AlertRow({ entry, onRemove }: { entry: AlertEntry; onRemove: () => void
   const tone = entry.type === 'error' ? 'danger' : 'warning'
   const color = colors[tone]
   const Icon = entry.type === 'error' ? CircleAlert : TriangleAlert
-  return (
+  const card = (
     <View
       style={[
         styles.row,
@@ -42,31 +43,45 @@ function AlertRow({ entry, onRemove }: { entry: AlertEntry; onRemove: () => void
           <Chip label={resolved ? 'Resolved' : 'Active'} tone={resolved ? 'success' : tone} />
         </View>
       </View>
-      {resolved ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Remove alert: ${entry.title}`}
-          android_ripple={{ color: colors.default, borderless: true, radius: 22 }}
-          onPress={onRemove}
-          style={styles.remove}
-        >
-          <X size={20} color={colors.muted} />
-        </Pressable>
-      ) : null}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Remove alert: ${entry.title}`}
+        android_ripple={{ color: colors.default, borderless: true, radius: 22 }}
+        onPress={onRemove}
+        style={styles.remove}
+      >
+        <X size={20} color={colors.muted} />
+      </Pressable>
     </View>
+  )
+  // Slide an alert away to delete it; the ✕ stays for screen readers and one-handed taps.
+  return (
+    <ReanimatedSwipeable
+      overshootRight={false}
+      containerStyle={styles.swipe}
+      renderRightActions={() => (
+        <View style={[styles.action, { backgroundColor: colors.danger }]}>
+          <Trash2 size={22} color={colors.dangerForeground} />
+        </View>
+      )}
+      onSwipeableOpen={onRemove}
+    >
+      {card}
+    </ReanimatedSwipeable>
   )
 }
 
 /**
- * The alert log, newest first, as the dashboard's Alerts page. An open alert stays until its
- * condition clears; only a resolved one can be deleted, one by one or all at once.
+ * The alert log, newest first, as the dashboard's Alerts page. Any alert can be deleted, one by
+ * one (slide it away, or its ✕) or, for resolved ones, all at once. Deleting an open alert only
+ * hides it: it stays quiet until its condition clears, so it is not raised again at once.
  */
 export function AlertsScreen() {
   const { colors } = useTheme()
   const { entries, remove, clearResolved } = useAlerts()
   const anyResolved = entries.some((entry) => entry.resolvedAt !== undefined)
   return (
-    <SettingsScreen title="Alerts">
+    <SettingsScreen title="Alerts" banner={false}>
       {entries.length === 0 ? (
         <EmptyState
           icon={<Bell size={28} color={colors.muted} />}
@@ -100,6 +115,8 @@ export function AlertsScreen() {
 }
 
 const styles = StyleSheet.create({
+  swipe: { borderRadius: radius['2xl'], overflow: 'hidden' },
+  action: { width: 96, alignItems: 'center', justifyContent: 'center' },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
