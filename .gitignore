@@ -51,3 +51,6 @@ yarn-error.*
 
 # Local scratch notes; never committed
 .scratch/
+
+# Graphify knowledge graph; built per machine with `graphify update .`
+graphify-out/
