@@ -4,7 +4,6 @@ import { ScrollView, StyleSheet, View } from 'react-native'
 import { Freeze } from 'react-freeze'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { layout, useTheme } from '@/theme'
-import { AppHeader } from './AppHeader'
 import { Banner } from './ui'
 
 /** Holds the page still while a control inside it follows the finger (the heater dial). */
@@ -21,7 +20,7 @@ export function useScrollLock(): ScrollLock {
 }
 
 /**
- * One tab's frame: the header, the connection-lost note, and the page's cards stacked in a
+ * One tab's frame: the connection-lost note, and the page's cards stacked in a
  * scrolling column (the dashboard's phone layout). The native tab bar adds its own bottom inset.
  *
  * The note matters because every bus topic is retained: without it, a dropped connection would
@@ -46,7 +45,6 @@ export function Screen({ children }: { children: ReactNode }) {
   )
   return (
     <View style={[styles.page, { backgroundColor: colors.background }]}>
-      <AppHeader />
       <ScrollView
         ref={scroll}
         contentContainerStyle={styles.content}
