@@ -43,10 +43,11 @@ export function ConfirmHost() {
             {options?.message ? <Dialog.Description>{options.message}</Dialog.Description> : null}
           </View>
           <View className="flex-row justify-end gap-3">
-            <Button variant="ghost" size="sm" onPress={() => setIsOpen(false)}>
-              Cancel
+            <Button className="shrink-0" variant="ghost" size="sm" onPress={() => setIsOpen(false)}>
+              <Button.Label numberOfLines={1}>Cancel</Button.Label>
             </Button>
             <Button
+              className="shrink-0"
               variant={options?.destructive ? 'danger' : 'primary'}
               size="sm"
               onPress={() => {
@@ -54,7 +55,7 @@ export function ConfirmHost() {
                 options?.onConfirm()
               }}
             >
-              {options?.action}
+              <Button.Label numberOfLines={1}>{options?.action}</Button.Label>
             </Button>
           </View>
         </Dialog.Content>
