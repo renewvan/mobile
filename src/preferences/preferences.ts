@@ -6,7 +6,7 @@
 export const START_WIDGET_IDS = [
   'temperature',
   'map',
-  'energy',
+  'power-flow',
   'battery',
   'heater',
   'solar',
@@ -19,7 +19,7 @@ export type StartWidgetId = (typeof START_WIDGET_IDS)[number]
 export const START_WIDGET_LABELS: Record<StartWidgetId, string> = {
   temperature: 'Temperature',
   map: 'Map',
-  energy: 'Energy',
+  'power-flow': 'Power flow',
   battery: 'Battery',
   heater: 'Heater',
   solar: 'Solar production',
@@ -99,7 +99,7 @@ export interface Preferences {
   hiddenTemperatures: readonly string[]
   /** How Settings › Devices lists them. */
   devicesSort: DevicesSort
-  /** The Power tab's diagram, and the Start tab's Energy widget, which draws the same one. */
+  /** The Power tab's diagram, and the Start tab's Power flow widget, which draws the same one. */
   powerLayout: PowerLayout
   /** Whether a new alert is posted as a system notification. The Alerts screen records them either way. */
   alertsEnabled: boolean
@@ -118,6 +118,11 @@ export const DEFAULT_PREFERENCES: Preferences = {
 
 function isWidgetId(value: unknown): value is StartWidgetId {
   return START_WIDGET_IDS.some((id) => id === value)
+}
+
+/** The widget `'energy'` is now `'power-flow'`; a layout stored before the rename keeps it. */
+function renamedWidget(value: unknown): unknown {
+  return value === 'energy' ? 'power-flow' : value
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -145,7 +150,7 @@ export function parsePreferences(raw: string | null): Preferences {
         : DEFAULT_PREFERENCES.theme,
     // An empty layout is a choice (no widgets), so only a missing or malformed one is defaulted.
     startLayout: Array.isArray(stored.startLayout)
-      ? [...new Set(stored.startLayout.filter(isWidgetId))]
+      ? [...new Set(stored.startLayout.map(renamedWidget).filter(isWidgetId))]
       : DEFAULT_START_LAYOUT,
     hiddenTemperatures: Array.isArray(stored.hiddenTemperatures)
       ? [...new Set(stored.hiddenTemperatures.filter((id) => typeof id === 'string'))]

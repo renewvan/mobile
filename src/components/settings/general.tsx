@@ -194,13 +194,13 @@ export function DisplayView() {
 
 const POWER_LAYOUT_OPTIONS = POWER_LAYOUTS.map((key) => ({ key, label: POWER_LAYOUT_LABELS[key] }))
 
-/** How the power-flow diagram is drawn on the Power tab and in the Start tab's Energy widget. */
+/** How the power-flow diagram is drawn on the Power tab and in the Start tab's Power flow widget. */
 export function PowerPageView() {
   const { powerLayout, update } = usePreferences()
   return (
     <Group
       title="Layout"
-      note="This phone's own choice. The Start tab's Energy widget draws the same layout."
+      note="This phone's own choice. The Start tab's Power flow widget draws the same layout."
     >
       <Box padded>
         <ChoiceRow

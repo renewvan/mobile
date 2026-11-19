@@ -14,10 +14,17 @@ describe('parsePreferences', () => {
     expect(parsePreferences('[1,2]')).toEqual(DEFAULT_PREFERENCES)
   })
 
+  it('reads the old widget id energy as power-flow', () => {
+    expect(parsePreferences('{"startLayout":["heater","energy"]}').startLayout).toEqual([
+      'heater',
+      'power-flow',
+    ])
+  })
+
   it('reads back what was stored', () => {
     const stored = {
       theme: 'dark',
-      startLayout: ['heater', 'energy'],
+      startLayout: ['heater', 'power-flow'],
       hiddenTemperatures: ['pi_cpu'],
       devicesSort: 'entity',
       powerLayout: 'van-orbs',
@@ -88,18 +95,18 @@ describe('alertsEnabled', () => {
 })
 
 describe('layoutAfterDrop', () => {
-  const layout = ['temperature', 'map', 'energy'] as const
+  const layout = ['temperature', 'map', 'power-flow'] as const
   // slots: temperature, map, energy, divider, battery, heater, solar, tilt, fresh-water, grey-water
   it('reorders within the shown widgets', () => {
-    expect(layoutAfterDrop(layout, 0, 2)).toEqual(['map', 'energy', 'temperature'])
+    expect(layoutAfterDrop(layout, 0, 2)).toEqual(['map', 'power-flow', 'temperature'])
   })
 
   it('shows a hidden widget dropped above the divider, at that place', () => {
-    expect(layoutAfterDrop(layout, 5, 1)).toEqual(['temperature', 'heater', 'map', 'energy'])
+    expect(layoutAfterDrop(layout, 5, 1)).toEqual(['temperature', 'heater', 'map', 'power-flow'])
   })
 
   it('hides a shown widget dropped below the divider', () => {
-    expect(layoutAfterDrop(layout, 0, 3)).toEqual(['map', 'energy'])
+    expect(layoutAfterDrop(layout, 0, 3)).toEqual(['map', 'power-flow'])
   })
 
   it('changes nothing for the divider, a hidden widget moved among the hidden, or a drop in place', () => {

@@ -1,7 +1,18 @@
 import { Cable, Plug, PlugZap, Sun, type LucideIcon } from 'lucide-react-native'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from 'react-native'
-import Svg, { Circle, ClipPath, Defs, G, Path, Rect } from 'react-native-svg'
+import Svg, {
+  Circle,
+  ClipPath,
+  Defs,
+  FeGaussianBlur,
+  Filter,
+  G,
+  LinearGradient,
+  Path,
+  Rect,
+  Stop,
+} from 'react-native-svg'
 import {
   VAN_SIDE_H,
   VAN_SIDE_PATH,
@@ -18,6 +29,8 @@ import {
   formatPower,
   IDLE_W,
   inputWatts,
+  PULSE_PAUSE_S,
+  pulsePass,
   type NodeId,
   type PowerSnapshot,
 } from './flowModel'
@@ -147,7 +160,17 @@ function wirePath(a: Point, b: Point, side: Side): string {
     : `M${a.x} ${a.y} C ${(a.x + b.x) / 2} ${a.y}, ${(a.x + b.x) / 2} ${b.y}, ${b.x} ${b.y}`
 }
 
+const DOME_R = 9
+
+/** A semicircle on the van's outline at a port, bulging away from the van (the dashboard's). */
+function domePath({ x, y }: Point, side: Side): string {
+  if (side === 'l') return `M${x} ${y - DOME_R} A${DOME_R} ${DOME_R} 0 0 0 ${x} ${y + DOME_R} Z`
+  if (side === 'r') return `M${x} ${y - DOME_R} A${DOME_R} ${DOME_R} 0 0 1 ${x} ${y + DOME_R} Z`
+  return `M${x - DOME_R} ${y} A${DOME_R} ${DOME_R} 0 0 1 ${x + DOME_R} ${y} Z`
+}
+
 const AnimatedPath = Animated.createAnimatedComponent(Path)
+const AnimatedRect = Animated.createAnimatedComponent(Rect)
 
 /** One dash and one gap: the distance the dashes travel per loop, so the loop has no seam. */
 const DASH_PERIOD = 24
@@ -185,16 +208,20 @@ function FlowDashes({
     loop.start()
     return () => loop.stop()
   }, [offset, duration, still])
+  const dashes = {
+    d,
+    fill: 'none',
+    stroke: color,
+    strokeLinecap: 'round' as const,
+    strokeDasharray: [3, DASH_PERIOD - 3],
+    strokeDashoffset: offset,
+  }
   return (
-    <AnimatedPath
-      d={d}
-      fill="none"
-      stroke={color}
-      strokeWidth={6}
-      strokeLinecap="round"
-      strokeDasharray={[3, DASH_PERIOD - 3]}
-      strokeDashoffset={offset}
-    />
+    <>
+      {/* The dashboard's `drop-shadow(0 0 5px accent)`: a blurred copy under the dashes. */}
+      <AnimatedPath {...dashes} strokeWidth={6} filter="url(#wire-glow)" />
+      <AnimatedPath {...dashes} strokeWidth={6} />
+    </>
   )
 }
 
@@ -249,47 +276,188 @@ export function useReduceMotion(): boolean {
   return reduce
 }
 
+/** Share of one band loop spent travelling; the rest is the pause before the next pass. */
+const PASS_SHARE = 0.6
 const TOP = 1.25
 const BOTTOM = 66.752
 
-/** The van, filled from the bottom to the battery's state of charge; danger at 20% and below. */
-const VanArt = memo(function VanArt({ soc, width }: { soc: number | undefined; width: number }) {
+/** Room around the van's artwork for its glow, in the artwork's own units. */
+const GLOW_PAD = 14
+const SIDE_BOX = `${-GLOW_PAD} ${-GLOW_PAD} ${VAN_SIDE_W + 2 * GLOW_PAD} ${VAN_SIDE_H + 2 * GLOW_PAD}`
+
+/**
+ * The van as the dashboard draws it (`power/VanArt.tsx`): filled from the bottom to the battery's
+ * state of charge, danger at 20% and below. While power flows in, a soft band rises through the
+ * fill and the whole van glows; the outline's tight halo is dark theme only.
+ */
+const VanArt = memo(function VanArt({
+  soc,
+  width,
+  powered,
+  pulseS,
+  still,
+}: {
+  soc: number | undefined
+  width: number
+  /** Power is coming in (solar, alternator, shore), not just a positive net. */
+  powered: boolean
+  /** Seconds one charging band takes to rise through the van. */
+  pulseS: number
+  still: boolean
+}) {
   const { colors, isDark } = useTheme()
   const low = soc !== undefined && soc <= 20
   const colour = low ? colors.danger : colors.accent
   const level = (BOTTOM - TOP) * Math.min(1, Math.max(0, (soc ?? 0) / 100))
+  const bandH = (BOTTOM - TOP) * 0.2
+  const known = soc !== undefined
+  const [t] = useState(() => new Animated.Value(0))
+  const charging = powered && !still
+  // Where the band is in its loop (0–1), kept across a change of pace: a new reading that speeds
+  // the band up or slows it down carries on from here instead of restarting from the bottom.
+  const at = useRef(0)
+  useEffect(() => {
+    if (!charging) return
+    let live = true
+    const run = (from: number) => {
+      t.setValue(from)
+      Animated.timing(t, {
+        toValue: 1,
+        duration: (1 - from) * (pulseS + PULSE_PAUSE_S) * 1000,
+        easing: Easing.linear,
+        // `y` is an SVG attribute, not a style: it cannot run on the native driver.
+        useNativeDriver: false,
+      }).start(({ finished }) => {
+        if (finished && live) run(0)
+      })
+    }
+    run(at.current)
+    return () => {
+      live = false
+      t.stopAnimation((value) => {
+        at.current = value
+      })
+    }
+  }, [t, charging, pulseS])
+  // The band's pass is a fixed share of the loop at any pace, so a change of pace never moves it.
+  const bandY = t.interpolate({
+    inputRange: [0, PASS_SHARE, 1],
+    outputRange: [BOTTOM, TOP - bandH, TOP - bandH],
+  })
+  const px = (width * (VAN_SIDE_W + 2 * GLOW_PAD)) / VAN_SIDE_W
+  const pad = (width * GLOW_PAD) / VAN_SIDE_W
+  const fill = alpha(colour, isDark ? 0.35 : 0.16)
   return (
-    <Svg
-      width={width}
-      height={(width * VAN_SIDE_H) / VAN_SIDE_W}
-      viewBox={`0 0 ${VAN_SIDE_W} ${VAN_SIDE_H}`}
-    >
-      <Defs>
-        <ClipPath id="van-body">
-          <Path d={VAN_SILHOUETTE_PATH} />
-        </ClipPath>
-      </Defs>
-      <G clipPath="url(#van-body)">
-        <Rect x={0} y={0} width={VAN_SIDE_W} height={VAN_SIDE_H} fill={colors.surface} />
-        <Rect
-          x={0}
-          y={BOTTOM - level}
-          width={VAN_SIDE_W}
-          height={level}
-          fill={alpha(colour, isDark ? 0.35 : 0.16)}
+    <View style={{ width, height: (width * VAN_SIDE_H) / VAN_SIDE_W }}>
+      <Svg
+        width={px}
+        height={(px * (VAN_SIDE_H + 2 * GLOW_PAD)) / (VAN_SIDE_W + 2 * GLOW_PAD)}
+        viewBox={SIDE_BOX}
+        style={{ position: 'absolute', left: -pad, top: -pad }}
+      >
+        <Defs>
+          <ClipPath id="van-body">
+            <Path d={VAN_SILHOUETTE_PATH} />
+          </ClipPath>
+          <ClipPath id="van-fill">
+            <Rect x={0} y={BOTTOM - level} width={VAN_SIDE_W} height={level} />
+          </ClipPath>
+          <LinearGradient id="van-glow" x1="0" x2="0" y1="1" y2="0">
+            <Stop offset="0" stopColor={colour} stopOpacity={0} />
+            <Stop offset="1" stopColor={colour} stopOpacity={1} />
+          </LinearGradient>
+          <Filter id="van-shadow" filterUnits="userSpaceOnUse" {...SIDE_REGION}>
+            <FeGaussianBlur stdDeviation={4} />
+          </Filter>
+          <Filter id="van-halo-wide" filterUnits="userSpaceOnUse" {...SIDE_REGION}>
+            <FeGaussianBlur stdDeviation={1.2} />
+          </Filter>
+          <Filter id="van-halo-tight" filterUnits="userSpaceOnUse" {...SIDE_REGION}>
+            <FeGaussianBlur stdDeviation={0.5} />
+          </Filter>
+        </Defs>
+        {powered && (
+          // The tile's glow, traced round the van: the fill and the outline, blurred.
+          <G opacity={0.45} filter="url(#van-shadow)">
+            <G clipPath="url(#van-body)">
+              <Rect x={0} y={BOTTOM - level} width={VAN_SIDE_W} height={level} fill={fill} />
+            </G>
+            <Path
+              d={VAN_SIDE_PATH}
+              fill="none"
+              stroke={colour}
+              strokeWidth={1.3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </G>
+        )}
+        <G clipPath="url(#van-body)">
+          <Rect
+            x={0}
+            y={0}
+            width={VAN_SIDE_W}
+            height={VAN_SIDE_H}
+            fill={isDark ? colors.surface : 'none'}
+          />
+          <Rect x={0} y={BOTTOM - level} width={VAN_SIDE_W} height={level} fill={fill} />
+          {charging && (
+            <G clipPath="url(#van-fill)">
+              <AnimatedRect
+                x={0}
+                y={bandY}
+                width={VAN_SIDE_W}
+                height={bandH}
+                fill="url(#van-glow)"
+                opacity={0.55}
+              />
+            </G>
+          )}
+        </G>
+        {isDark && known && (
+          <>
+            <Path
+              d={VAN_SIDE_PATH}
+              fill="none"
+              stroke={colour}
+              strokeWidth={1.3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={powered ? 1 : 0.7}
+              filter="url(#van-halo-tight)"
+            />
+            {powered && (
+              <Path
+                d={VAN_SIDE_PATH}
+                fill="none"
+                stroke={colour}
+                strokeWidth={1.3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#van-halo-wide)"
+              />
+            )}
+          </>
+        )}
+        <Path
+          d={VAN_SIDE_PATH}
+          fill="none"
+          stroke={colour}
+          strokeWidth={1.3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
-      </G>
-      <Path
-        d={VAN_SIDE_PATH}
-        fill="none"
-        stroke={colour}
-        strokeWidth={1.3}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
+      </Svg>
+    </View>
   )
 })
+
+const SIDE_REGION = {
+  x: -GLOW_PAD,
+  y: -GLOW_PAD,
+  width: VAN_SIDE_W + 2 * GLOW_PAD,
+  height: VAN_SIDE_H + 2 * GLOW_PAD,
+}
 
 const GRIDLINES = [25, 50, 75]
 
@@ -322,8 +490,28 @@ const ChargeBar = memo(function ChargeBar({ soc }: { soc: number | undefined }) 
 })
 
 /** An orb's ring, filled clockwise from the top with `share` (0–1) of the peak. */
-const OrbRing = memo(function OrbRing({ x, y, share }: { x: number; y: number; share: number }) {
+const OrbRing = memo(function OrbRing({
+  x,
+  y,
+  share,
+  active,
+}: {
+  x: number
+  y: number
+  share: number
+  active: boolean
+}) {
   const { colors } = useTheme()
+  const arc = {
+    cx: x,
+    cy: y,
+    r: ORB_R,
+    fill: 'none',
+    stroke: colors.accent,
+    strokeLinecap: 'round' as const,
+    strokeDasharray: `${ORB_CIRC * share} ${ORB_CIRC}`,
+    transform: `rotate(-90 ${x} ${y})`,
+  }
   return (
     <G>
       <Circle
@@ -335,19 +523,8 @@ const OrbRing = memo(function OrbRing({ x, y, share }: { x: number; y: number; s
         strokeOpacity={0.25}
         strokeWidth={6}
       />
-      {share > 0 && (
-        <Circle
-          cx={x}
-          cy={y}
-          r={ORB_R}
-          fill="none"
-          stroke={colors.accent}
-          strokeWidth={7}
-          strokeLinecap="round"
-          strokeDasharray={`${ORB_CIRC * share} ${ORB_CIRC}`}
-          transform={`rotate(-90 ${x} ${y})`}
-        />
-      )}
+      {share > 0 && active && <Circle {...arc} strokeWidth={7} filter="url(#wire-glow)" />}
+      {share > 0 && <Circle {...arc} strokeWidth={7} />}
     </G>
   )
 })
@@ -370,15 +547,17 @@ const OrbReadout = memo(function OrbReadout({
   x,
   y,
   scale,
-}: ReadoutProps & { x: number; y: number }) {
+  labelAbove,
+}: ReadoutProps & { x: number; y: number; labelAbove: boolean }) {
   const { colors } = useTheme()
   const Icon = ICONS[id]
   const size = ORB_R * 2 * scale
   const left = (x - ORB_R) * scale
   const top = (y - ORB_R - FRAME_TOP) * scale
-  // The label sits outside the ring: left of the Solar orb (above it would crowd the card's
-  // title), under the lower orb of a stacked pair, above any other.
-  const beside = id === 'solar'
+  // The label sits outside the ring: above the Solar orb in a card, which leaves room for it
+  // under its title, and left of it elsewhere; under the lower orb of a stacked pair, above any
+  // other.
+  const beside = id === 'solar' && !labelAbove
   const below = y === SLOT_DOWN_Y
   const labelGap = ORB_LABEL_GAP * scale
   return (
@@ -472,9 +651,12 @@ const Tile = memo(function Tile({
 export function PowerFlow({
   flow,
   layout = 'van-tiles',
+  card = false,
 }: {
   flow: PowerSnapshot
   layout?: PowerLayout
+  /** In a card on the Start tab: the Van orbs' Solar label sits above its orb, not beside it. */
+  card?: boolean
 }) {
   const { colors } = useTheme()
   const [width, setWidth] = useState(0)
@@ -532,10 +714,25 @@ export function PowerFlow({
         viewBox={`0 ${FRAME_TOP} ${FRAME_W} ${frameH}`}
         style={StyleSheet.absoluteFill}
       >
+        <Defs>
+          <Filter
+            id="wire-glow"
+            filterUnits="userSpaceOnUse"
+            x={0}
+            y={FRAME_TOP}
+            width={FRAME_W}
+            height={frameH}
+          >
+            <FeGaussianBlur stdDeviation={2.5} />
+          </Filter>
+        </Defs>
         {wires.map(({ id, d, active, duration }) => (
           <Wire key={id} d={d} active={active} duration={duration} still={reduceMotion} />
         ))}
-        {orbs && wires.map(({ id, x, y, share }) => <OrbRing key={id} x={x} y={y} share={share} />)}
+        {orbs &&
+          wires.map(({ id, x, y, share, active }) => (
+            <OrbRing key={id} x={x} y={y} share={share} active={active} />
+          ))}
       </Svg>
     ),
     // `wires` is read through its key: a new array with the same contents draws the same.
@@ -557,8 +754,30 @@ export function PowerFlow({
               opacity: charging || flow.batteryState !== 'unknown' ? 1 : 0.6,
             }}
           >
-            <VanArt soc={soc} width={VAN.w * scale} />
+            <VanArt
+              soc={soc}
+              width={VAN.w * scale}
+              powered={charging}
+              pulseS={pulsePass(inputWatts(flow), flow.peakW)}
+              still={reduceMotion}
+            />
           </View>
+
+          <Svg
+            width={width}
+            height={frameH * scale}
+            viewBox={`0 ${FRAME_TOP} ${FRAME_W} ${frameH}`}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          >
+            {all.map((id) => (
+              <Path
+                key={id}
+                d={domePath(orbs ? spotOf(id).port : ANCHORS[id].port, ANCHORS[id].side)}
+                fill={colors.accent}
+              />
+            ))}
+          </Svg>
 
           {orbs &&
             all.map((id) => {
@@ -574,6 +793,7 @@ export function PowerFlow({
                   x={spot.c.x}
                   y={spot.c.y}
                   scale={scale}
+                  labelAbove={card}
                 />
               )
             })}

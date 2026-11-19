@@ -1,4 +1,11 @@
-import { Droplet, Heater as HeaterIcon, LayoutGrid, Sun, Waves, Zap } from 'lucide-react-native'
+import {
+  Droplet,
+  Heater as HeaterIcon,
+  LayoutGrid,
+  Sun,
+  Waves,
+  Waypoints,
+} from 'lucide-react-native'
 import { memo, useMemo, type ReactNode } from 'react'
 import { useCommands } from '@/bus/commands'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
@@ -33,6 +40,9 @@ function tankOf(tanks: Record<string, Partial<Tank>>, fluid: FluidType) {
   }
   return undefined
 }
+
+/** Room under the card's title for the Van orbs' Solar label, which sits above its orb. */
+const ORBS_CONTENT = { paddingTop: 32 }
 
 /**
  * The Start tab: the van at a glance, one widget per reading, stacked as the dashboard stacks
@@ -78,13 +88,17 @@ export default function StartTab() {
             <VanMap variant="card" onExpand={() => openSettings('map')} />
           </Card>
         )
-      case 'energy':
+      case 'power-flow':
         return (
-          <TitledCard icon={<MutedIcon icon={Zap} />} title="Energy">
+          <TitledCard
+            icon={<MutedIcon icon={Waypoints} />}
+            title="Power flow"
+            contentStyle={powerLayout === 'van-orbs' ? ORBS_CONTENT : undefined}
+          >
             {flow.nodes.battery.present ? (
-              <PowerFlow flow={flow} layout={powerLayout} />
+              <PowerFlow flow={flow} layout={powerLayout} card />
             ) : (
-              <NoData icon={<MutedIcon icon={Zap} />} label="Power" />
+              <NoData icon={<MutedIcon icon={Waypoints} />} label="Power flow" />
             )}
           </TitledCard>
         )
@@ -134,7 +148,7 @@ export default function StartTab() {
         return [colors, temperatures]
       case 'map':
         return [colors]
-      case 'energy':
+      case 'power-flow':
         return [colors, flow, powerLayout]
       case 'battery':
         return [colors, batteries, choice]
