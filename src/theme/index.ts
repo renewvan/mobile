@@ -87,10 +87,12 @@ export function alpha(hex: string, opacity: number): string {
 }
 
 /**
- * The dashboard's corner radii. Its base `--radius` is 0.25rem (4px), a quarter of the library's
- * default, and every component derives from it: 12 for buttons, toggle groups and cards (`3xl`), 8
- * for chips and settings rows (`2xl`), 6 for switch and slider tracks (`xl`), 4 for their thumbs,
- * level bars (`lg`) and text fields (`--field-radius`). So the app is squared off the same way.
+ * The corner radii: HeroUI's scale from the dashboard's one token, `--radius` (0.25rem, 4px), as
+ * `src/global.css` gives it to HeroUI Native. A part we draw takes the radius of the HeroUI
+ * component it resembles (the dashboard's `docs/design-principles.md`, "Corner radii"): 12 for
+ * buttons, toggles, steppers and cards (`3xl`), 8 for chips, badges (the DEMO badge too) and
+ * Settings rows (`2xl`), 6 for notes, banners and map overlays (`xl`), 4 for level bars and fields
+ * (`lg`). A circle only for what is round by nature. Never a number or a pill.
  */
 export const radius = { sm: 2, md: 3, lg: 4, xl: 6, '2xl': 8, '3xl': 12, field: 4 } as const
 

@@ -46,7 +46,7 @@ function AlertRow({ entry, onRemove }: { entry: AlertEntry; onRemove: () => void
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Remove alert: ${entry.title}`}
-        android_ripple={{ color: colors.default, borderless: true, radius: 22 }}
+        android_ripple={{ color: colors.default }}
         onPress={onRemove}
         style={styles.remove}
       >
@@ -133,5 +133,12 @@ const styles = StyleSheet.create({
   description: { fontSize: 14 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
   time: { fontSize: 12, fontWeight: '600' },
-  remove: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  remove: {
+    width: 44,
+    height: 44,
+    borderRadius: radius['3xl'],
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 })

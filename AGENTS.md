@@ -63,8 +63,12 @@ Docs: https://docs.expo.dev/eas/index.md
   theme tokens (`dashboard/src/global.css`) and its 4px `--radius`. Change a token in the dashboard
   first, then copy it there and into the hex palette in `src/theme`, which hand-drawn parts read.
 - The app icon and brand blue (`#0385f7`) come from the dashboard's logo SVGs; keep the van's proportions in `assets/android-icon-*.png` as described in the README ("App icon and colors").
-- Corner radii come from `radius` in `src/theme` (or Tailwind's `rounded-*`, which derive from the
-  same `--radius`). Do not hard-code a radius or reach for a pill.
+- Corner radii are HeroUI's scale from the one `--radius` token (4px), as in the dashboard's
+  `docs/design-principles.md` ("Corner radii"): `radius` in `src/theme` or Tailwind's `rounded-*`.
+  A part we draw takes the radius of the HeroUI component it resembles: `3xl` for buttons, toggles
+  and cards, `2xl` for chips, badges (the DEMO badge too) and Settings rows, `xl` for notes, `lg`
+  for level bars. A circle only for what is round by nature. Never a number or a pill, and a
+  pressable's Android ripple stays inside its corners (`overflow: 'hidden'`, not `borderless`).
 - `src/lib/`, `src/types.ts` and the `*Model.ts` / `*View.ts` files are copied from `renewvan/dashboard`
   with their tests. Change them in the dashboard first, then copy; never let the two drift.
 - A command is never assumed to have worked: the UI follows the retained state on the bus, shows a

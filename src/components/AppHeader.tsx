@@ -3,6 +3,8 @@ import { SymbolView } from 'expo-symbols'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
+import { useCommands } from '@/bus/commands'
+import { confirm } from '@/components/native'
 import { radius, useTheme } from '@/theme'
 import { LogoLockup } from './Logo'
 
@@ -27,20 +29,34 @@ export function useAppHeaderOptions() {
 function HeaderActions() {
   const { colors } = useTheme()
   const { status, demoMode } = useRenewvanBus()
+  const commands = useCommands()
   const { openCount } = useAlerts()
   const attention = openCount > 0 || status === 'disconnected'
 
   return (
     <View style={styles.right}>
       {demoMode ? (
-        <View style={[styles.demo, { backgroundColor: colors.warning }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Demo mode, tap to turn off"
+          hitSlop={8}
+          onPress={() =>
+            confirm({
+              title: 'Turn off Demo mode?',
+              message: 'Every client, the kiosk included, goes back to the live van.',
+              action: 'Turn off',
+              onConfirm: () => commands.setDemoMode(false),
+            })
+          }
+          style={[styles.demo, { backgroundColor: colors.warning }]}
+        >
           <Text style={[styles.demoText, { color: colors.warningForeground }]}>DEMO</Text>
-        </View>
+        </Pressable>
       ) : null}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={attention ? 'Settings, needs attention' : 'Settings'}
-        android_ripple={{ color: colors.default, borderless: true, radius: 22 }}
+        android_ripple={{ color: colors.default }}
         hitSlop={8}
         onPress={() => router.push('/settings')}
         style={styles.menu}
@@ -58,9 +74,17 @@ function HeaderActions() {
 
 const styles = StyleSheet.create({
   right: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  demo: { borderRadius: radius.lg, paddingHorizontal: 10, paddingVertical: 3 },
+  demo: { borderRadius: radius['2xl'], paddingHorizontal: 10, paddingVertical: 3 },
   demoText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-  menu: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  // The ripple stays inside the button, so it takes HeroUI's button corners instead of a circle.
+  menu: {
+    width: 32,
+    height: 32,
+    borderRadius: radius['3xl'],
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   dot: {
     position: 'absolute',
     top: 2,

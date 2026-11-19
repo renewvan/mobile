@@ -889,7 +889,7 @@ function SatelliteBar({ sat }: { sat: GpsSatellite }) {
         <View
           style={{
             height: Math.max(2, signalFraction(sat.snr_db) * 64),
-            borderRadius: 3,
+            borderRadius: radius.lg,
             backgroundColor: tone,
           }}
         />
@@ -1136,10 +1136,15 @@ const styles = StyleSheet.create({
   axisText: { fontSize: 10, ...tabular },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
   bar: { flex: 1, alignItems: 'center', gap: 4 },
-  barTrack: { height: BAR_H, alignSelf: 'stretch', borderRadius: 4, justifyContent: 'flex-end' },
+  barTrack: {
+    height: BAR_H,
+    alignSelf: 'stretch',
+    borderRadius: radius.lg,
+    justifyContent: 'flex-end',
+  },
   sats: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   sat: { width: 22, alignItems: 'center', gap: 4 },
-  satTrack: { height: 64, width: 14, borderRadius: 3, justifyContent: 'flex-end' },
+  satTrack: { height: 64, width: 14, borderRadius: radius.lg, justifyContent: 'flex-end' },
   headline: {
     flexDirection: 'row',
     alignItems: 'baseline',

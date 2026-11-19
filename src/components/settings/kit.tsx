@@ -375,7 +375,7 @@ export function MoveRow({
         accessibilityLabel={`Move ${label} ${direction}`}
         accessibilityState={{ disabled: onPress === undefined }}
         disabled={onPress === undefined}
-        android_ripple={{ color: colors.default, borderless: true, radius: 20 }}
+        android_ripple={{ color: colors.default }}
         onPress={onPress}
         style={[styles.arrow, { opacity: onPress === undefined ? 0.3 : 1 }]}
       >
@@ -595,7 +595,7 @@ export function IconPicker({
             accessibilityLabel={name}
             accessibilityState={{ selected, disabled }}
             disabled={disabled}
-            android_ripple={{ color: alpha(colors.accent, 0.2), borderless: true, radius: 24 }}
+            android_ripple={{ color: alpha(colors.accent, 0.2) }}
             onPress={() => {
               if (!selected) onChange(name)
             }}
@@ -636,7 +636,11 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   note: { fontSize: 13, lineHeight: 18, marginHorizontal: 4 },
-  box: { borderRadius: radius['2xl'], borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  box: {
+    borderRadius: radius['2xl'],
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
   boxPadded: { padding: 14, gap: 12 },
   row: {
     flexDirection: 'row',
@@ -675,10 +679,12 @@ const styles = StyleSheet.create({
   statUnit: { fontSize: 15, fontWeight: '400' },
   nameField: { gap: 10 },
   icons: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  // An icon choice is a toggle button, so it has HeroUI's button corners, not a circle.
   icon: {
     width: 46,
     height: 46,
-    borderRadius: 23,
+    borderRadius: radius['3xl'],
+    overflow: 'hidden',
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

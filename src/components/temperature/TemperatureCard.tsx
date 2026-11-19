@@ -4,13 +4,15 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { Card, CardHeader, SolidChip, tabular } from '@/components/ui'
 import { EntityIcon } from '@/components/EntityIcon'
 import { sensorLabel, temperatureReading } from '@/lib/temperature'
-import { useTheme, type Palette } from '@/theme'
+import { radius, useTheme, type Palette } from '@/theme'
 import type { TemperatureSensor } from '@/types'
 
 /** Display range of the scale, in °C. */
 const MIN_C = -20
 const MAX_C = 50
 const MARKS = [-20, -10, 0, 10, 20, 30, 40, 50]
+/** The scale's height; its corners are a level bar's (`radius.lg`), like the tank bars. */
+const BAR_HEIGHT = 12
 
 interface Band {
   label: string
@@ -72,7 +74,7 @@ export function TemperatureCard({
           <Text style={[styles.unit, { color: colors.muted }]}>°C</Text>
         </Text>
         <View style={styles.scale}>
-          <Svg width="100%" height={12}>
+          <Svg width="100%" height={BAR_HEIGHT}>
             <Defs>
               <LinearGradient id={`temp-${id}`} x1="0" y1="0" x2="1" y2="0">
                 <Stop offset="0" stopColor="#3b82f6" />
@@ -84,7 +86,14 @@ export function TemperatureCard({
                 <Stop offset="1" stopColor={colors.danger} />
               </LinearGradient>
             </Defs>
-            <Rect x="0" y="0" width="100%" height="12" rx="6" fill={`url(#temp-${id})`} />
+            <Rect
+              x="0"
+              y="0"
+              width="100%"
+              height={BAR_HEIGHT}
+              rx={radius.lg}
+              fill={`url(#temp-${id})`}
+            />
           </Svg>
           {c !== null && (
             <View style={[styles.markerRail, { left: `${pctOf(c)}%` }]}>

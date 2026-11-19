@@ -112,7 +112,7 @@ export function Chip({ label, tone }: { label: string; tone: Tone }) {
 /** A solid chip in an arbitrary colour (the temperature bands). */
 export function SolidChip({ label, color, fg }: { label: string; color: string; fg: string }) {
   return (
-    <View style={[styles.chip, styles.pill, { backgroundColor: color }]}>
+    <View style={[styles.chip, { backgroundColor: color }]}>
       <Text style={[styles.chipText, { color: fg }]}>{label}</Text>
     </View>
   )
@@ -214,7 +214,6 @@ const styles = StyleSheet.create({
   headerTitle: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
   title: { fontSize: 14, fontWeight: '600', flexShrink: 1 },
   content: { paddingHorizontal: 16, paddingBottom: 20, gap: 16 },
-  pill: { borderRadius: 999 },
   chip: { borderRadius: radius['2xl'], paddingHorizontal: 8, paddingVertical: 2 },
   chipText: { fontSize: 12, fontWeight: '600' },
   banner: { borderRadius: radius.xl, paddingHorizontal: 12, paddingVertical: 8 },
