@@ -3,6 +3,8 @@ import { SymbolView } from 'expo-symbols'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
+import { useCommands } from '@/bus/commands'
+import { confirm } from '@/components/native'
 import { radius, useTheme } from '@/theme'
 import { LogoLockup } from './Logo'
 
@@ -27,15 +29,29 @@ export function useAppHeaderOptions() {
 function HeaderActions() {
   const { colors } = useTheme()
   const { status, demoMode } = useRenewvanBus()
+  const commands = useCommands()
   const { openCount } = useAlerts()
   const attention = openCount > 0 || status === 'disconnected'
 
   return (
     <View style={styles.right}>
       {demoMode ? (
-        <View style={[styles.demo, { backgroundColor: colors.warning }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Demo mode, tap to turn off"
+          hitSlop={8}
+          onPress={() =>
+            confirm({
+              title: 'Turn off Demo mode?',
+              message: 'Every client, the kiosk included, goes back to the live van.',
+              action: 'Turn off',
+              onConfirm: () => commands.setDemoMode(false),
+            })
+          }
+          style={[styles.demo, { backgroundColor: colors.warning }]}
+        >
           <Text style={[styles.demoText, { color: colors.warningForeground }]}>DEMO</Text>
-        </View>
+        </Pressable>
       ) : null}
       <Pressable
         accessibilityRole="button"
