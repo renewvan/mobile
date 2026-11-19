@@ -63,15 +63,12 @@ Docs: https://docs.expo.dev/eas/index.md
   theme tokens (`dashboard/src/global.css`) and its 4px `--radius`. Change a token in the dashboard
   first, then copy it there and into the hex palette in `src/theme`, which hand-drawn parts read.
 - The app icon and brand blue (`#0385f7`) come from the dashboard's logo SVGs; keep the van's proportions in `assets/android-icon-*.png` as described in the README ("App icon and colors").
-- Corner radii follow the dashboard's rule (`dashboard/docs/design-principles.md`, "Corner radii"):
-  two sizes and the circle. `radius.control` (4px, `rounded-control`) for anything pressed or read at
-  a glance: buttons, toggles, tabs, switches, sliders, inputs, chips, badges, level bars, notes, map
-  overlays. `radius.container` (8px, `rounded-container`; `layout.radius` for cards) for anything
-  that holds other things: cards, Settings rows and boxes, dialogs. A circle only for what is round
-  by nature (status dots, swatches, dial markers). Never a number, a pill, or HeroUI's `rounded-xl`
-  … `3xl` scale; HeroUI Native's components are mapped onto the two sizes in `src/global.css`. A
-  pressable with an Android ripple keeps it inside its corners (`overflow: 'hidden'`, not
-  `borderless`).
+- Corner radii are HeroUI's scale from the one `--radius` token (4px), as in the dashboard's
+  `docs/design-principles.md` ("Corner radii"): `radius` in `src/theme` or Tailwind's `rounded-*`.
+  A part we draw takes the radius of the HeroUI component it resembles: `3xl` for buttons, toggles
+  and cards, `2xl` for chips, badges (the DEMO badge too) and Settings rows, `xl` for notes, `lg`
+  for level bars. A circle only for what is round by nature. Never a number or a pill, and a
+  pressable's Android ripple stays inside its corners (`overflow: 'hidden'`, not `borderless`).
 - `src/lib/`, `src/types.ts` and the `*Model.ts` / `*View.ts` files are copied from `renewvan/dashboard`
   with their tests. Change them in the dashboard first, then copy; never let the two drift.
 - A command is never assumed to have worked: the UI follows the retained state on the bus, shows a

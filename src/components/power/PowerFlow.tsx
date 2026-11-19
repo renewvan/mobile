@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   tile: {
     position: 'absolute',
     borderWidth: 1.5,
-    borderRadius: radius.control,
+    borderRadius: radius.lg,
     paddingHorizontal: 6,
     justifyContent: 'center',
     gap: 2,
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
   soc: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 },
   socBar: { width: 96 },
   socText: { fontSize: 20, ...tabular },
-  bar: { height: 24, borderRadius: radius.control, borderWidth: 2, overflow: 'hidden' },
+  bar: { height: 24, borderRadius: radius.lg, borderWidth: 2, overflow: 'hidden' },
   barFill: { position: 'absolute', left: 0, top: 0, bottom: 0 },
   barLine: { position: 'absolute', top: 0, bottom: 0, width: StyleSheet.hairlineWidth * 2 },
   state: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', gap: 10 },

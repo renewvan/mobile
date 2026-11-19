@@ -214,9 +214,9 @@ const styles = StyleSheet.create({
   headerTitle: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
   title: { fontSize: 14, fontWeight: '600', flexShrink: 1 },
   content: { paddingHorizontal: 16, paddingBottom: 20, gap: 16 },
-  chip: { borderRadius: radius.control, paddingHorizontal: 8, paddingVertical: 2 },
+  chip: { borderRadius: radius['2xl'], paddingHorizontal: 8, paddingVertical: 2 },
   chipText: { fontSize: 12, fontWeight: '600' },
-  banner: { borderRadius: radius.control, paddingHorizontal: 12, paddingVertical: 8 },
+  banner: { borderRadius: radius.xl, paddingHorizontal: 12, paddingVertical: 8 },
   bannerText: { fontSize: 12 },
   empty: {
     flex: 1,

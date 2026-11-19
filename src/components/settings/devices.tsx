@@ -764,7 +764,7 @@ function CellBars({ cells }: { cells: BmsCells }) {
                   <View
                     style={{
                       height: Math.max(3, bar.height * BAR_H),
-                      borderRadius: radius.control,
+                      borderRadius: radius.lg,
                       backgroundColor: bar.balancing ? colors.warning : colors.accent,
                     }}
                   />
@@ -889,7 +889,7 @@ function SatelliteBar({ sat }: { sat: GpsSatellite }) {
         <View
           style={{
             height: Math.max(2, signalFraction(sat.snr_db) * 64),
-            borderRadius: radius.control,
+            borderRadius: radius.lg,
             backgroundColor: tone,
           }}
         />
@@ -1139,12 +1139,12 @@ const styles = StyleSheet.create({
   barTrack: {
     height: BAR_H,
     alignSelf: 'stretch',
-    borderRadius: radius.control,
+    borderRadius: radius.lg,
     justifyContent: 'flex-end',
   },
   sats: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   sat: { width: 22, alignItems: 'center', gap: 4 },
-  satTrack: { height: 64, width: 14, borderRadius: radius.control, justifyContent: 'flex-end' },
+  satTrack: { height: 64, width: 14, borderRadius: radius.lg, justifyContent: 'flex-end' },
   headline: {
     flexDirection: 'row',
     alignItems: 'baseline',

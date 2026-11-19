@@ -115,14 +115,14 @@ export function AlertsScreen() {
 }
 
 const styles = StyleSheet.create({
-  swipe: { borderRadius: radius.container, overflow: 'hidden' },
+  swipe: { borderRadius: radius['2xl'], overflow: 'hidden' },
   action: { width: 96, alignItems: 'center', justifyContent: 'center' },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
     borderWidth: 1,
-    borderRadius: radius.container,
+    borderRadius: radius['2xl'],
     paddingVertical: 12,
     paddingLeft: 14,
     paddingRight: 4,
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   remove: {
     width: 44,
     height: 44,
-    borderRadius: radius.control,
+    borderRadius: radius['3xl'],
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',

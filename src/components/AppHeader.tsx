@@ -58,13 +58,13 @@ function HeaderActions() {
 
 const styles = StyleSheet.create({
   right: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  demo: { borderRadius: radius.control, paddingHorizontal: 10, paddingVertical: 3 },
+  demo: { borderRadius: radius['2xl'], paddingHorizontal: 10, paddingVertical: 3 },
   demoText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-  // The ripple stays inside the button, so it takes the theme's corners instead of a circle.
+  // The ripple stays inside the button, so it takes HeroUI's button corners instead of a circle.
   menu: {
     width: 32,
     height: 32,
-    borderRadius: radius.control,
+    borderRadius: radius['3xl'],
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',

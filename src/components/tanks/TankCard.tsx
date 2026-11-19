@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   pct: { fontSize: 36, lineHeight: 40, fontWeight: '600', ...tabular },
   litres: { fontSize: 14, fontWeight: '600', ...tabular },
-  track: { height: 24, borderRadius: radius.control, borderWidth: 2, overflow: 'hidden' },
+  track: { height: 24, borderRadius: radius.lg, borderWidth: 2, overflow: 'hidden' },
   fill: { position: 'absolute', left: 0, top: 0, bottom: 0 },
   gridline: { position: 'absolute', top: 0, bottom: 0, width: StyleSheet.hairlineWidth * 2 },
   stats: { flexDirection: 'row', gap: 8, marginTop: 16 },

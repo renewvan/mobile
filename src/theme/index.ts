@@ -87,16 +87,14 @@ export function alpha(hex: string, opacity: number): string {
 }
 
 /**
- * The corner radii, the dashboard's rule (its `docs/design-principles.md`, "Corner radii"): two
- * sizes from its base `--radius` (0.25rem, 4px), and the circle.
- * - `control` (4px): anything pressed or read at a glance: buttons, toggles, tabs, switches,
- *   sliders, inputs, chips, badges, level bars, notes, map overlays.
- * - `container` (8px): anything that holds other things: cards, Settings rows and boxes, dialogs.
- * - A circle (half the size) only for what is round by nature: status dots, swatches, dial markers.
- * `src/global.css` maps HeroUI Native's components onto the same two as `--radius-control` and
- * `--radius-container`. Use these, never a number.
+ * The corner radii: HeroUI's scale from the dashboard's one token, `--radius` (0.25rem, 4px), as
+ * `src/global.css` gives it to HeroUI Native. A part we draw takes the radius of the HeroUI
+ * component it resembles (the dashboard's `docs/design-principles.md`, "Corner radii"): 12 for
+ * buttons, toggles, steppers and cards (`3xl`), 8 for chips, badges (the DEMO badge too) and
+ * Settings rows (`2xl`), 6 for notes, banners and map overlays (`xl`), 4 for level bars and fields
+ * (`lg`). A circle only for what is round by nature. Never a number or a pill.
  */
-export const radius = { control: 4, container: 8 } as const
+export const radius = { sm: 2, md: 3, lg: 4, xl: 6, '2xl': 8, '3xl': 12, field: 4 } as const
 
 /** The page gutter and card radius every screen shares. */
-export const layout = { gutter: 16, gap: 12, radius: radius.container } as const
+export const layout = { gutter: 16, gap: 12, radius: radius['3xl'] } as const

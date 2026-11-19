@@ -11,7 +11,7 @@ import type { TemperatureSensor } from '@/types'
 const MIN_C = -20
 const MAX_C = 50
 const MARKS = [-20, -10, 0, 10, 20, 30, 40, 50]
-/** The scale's height; its corners are `radius.control`, like the tank bars. */
+/** The scale's height; its corners are a level bar's (`radius.lg`), like the tank bars. */
 const BAR_HEIGHT = 12
 
 interface Band {
@@ -91,7 +91,7 @@ export function TemperatureCard({
               y="0"
               width="100%"
               height={BAR_HEIGHT}
-              rx={radius.control}
+              rx={radius.lg}
               fill={`url(#temp-${id})`}
             />
           </Svg>

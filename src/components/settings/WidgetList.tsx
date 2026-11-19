@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: radius.container,
+    borderRadius: radius['2xl'],
     borderWidth: StyleSheet.hairlineWidth,
   },
   grip: { width: 48, height: ROW, alignItems: 'center', justifyContent: 'center' },

@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   },
   note: { fontSize: 13, lineHeight: 18, marginHorizontal: 4 },
   box: {
-    borderRadius: radius.container,
+    borderRadius: radius['2xl'],
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
@@ -679,11 +679,11 @@ const styles = StyleSheet.create({
   statUnit: { fontSize: 15, fontWeight: '400' },
   nameField: { gap: 10 },
   icons: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  // An icon choice is a control, like the dashboard's toggle buttons: not a circle.
+  // An icon choice is a toggle button, so it has HeroUI's button corners, not a circle.
   icon: {
     width: 46,
     height: 46,
-    borderRadius: radius.control,
+    borderRadius: radius['3xl'],
     overflow: 'hidden',
     borderWidth: 1,
     alignItems: 'center',

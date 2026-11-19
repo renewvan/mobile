@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   plot: { flex: 1, height: CHART_H, flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
   gridline: { position: 'absolute', left: 0, right: 0, height: StyleSheet.hairlineWidth },
   day: { flex: 1, height: CHART_H, justifyContent: 'flex-end' },
-  dayBar: { borderRadius: radius.control },
+  dayBar: { borderRadius: radius.lg },
   axis: { width: 22, height: CHART_H },
   tick: { position: 'absolute', right: 0, fontSize: 10, ...tabular },
   legend: { flexDirection: 'row', justifyContent: 'space-between', marginRight: 28 },
