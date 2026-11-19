@@ -54,3 +54,8 @@ yarn-error.*
 
 # Graphify knowledge graph; built per machine with `graphify update .`
 graphify-out/
+
+# Agent skills installed locally (Expo skills)
+.agents/
+.claude/skills/
+skills-lock.json
