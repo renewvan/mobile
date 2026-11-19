@@ -370,15 +370,17 @@ const OrbReadout = memo(function OrbReadout({
   x,
   y,
   scale,
-}: ReadoutProps & { x: number; y: number }) {
+  labelAbove,
+}: ReadoutProps & { x: number; y: number; labelAbove: boolean }) {
   const { colors } = useTheme()
   const Icon = ICONS[id]
   const size = ORB_R * 2 * scale
   const left = (x - ORB_R) * scale
   const top = (y - ORB_R - FRAME_TOP) * scale
-  // The label sits outside the ring: left of the Solar orb (above it would crowd the card's
-  // title), under the lower orb of a stacked pair, above any other.
-  const beside = id === 'solar'
+  // The label sits outside the ring: above the Solar orb in a card, which leaves room for it
+  // under its title, and left of it elsewhere; under the lower orb of a stacked pair, above any
+  // other.
+  const beside = id === 'solar' && !labelAbove
   const below = y === SLOT_DOWN_Y
   const labelGap = ORB_LABEL_GAP * scale
   return (
@@ -472,9 +474,12 @@ const Tile = memo(function Tile({
 export function PowerFlow({
   flow,
   layout = 'van-tiles',
+  card = false,
 }: {
   flow: PowerSnapshot
   layout?: PowerLayout
+  /** In a card on the Start tab: the Van orbs' Solar label sits above its orb, not beside it. */
+  card?: boolean
 }) {
   const { colors } = useTheme()
   const [width, setWidth] = useState(0)
@@ -574,6 +579,7 @@ export function PowerFlow({
                   x={spot.c.x}
                   y={spot.c.y}
                   scale={scale}
+                  labelAbove={card}
                 />
               )
             })}
