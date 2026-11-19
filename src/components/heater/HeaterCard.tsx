@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 16, paddingBottom: 16, gap: 12 },
   info: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   infoText: { fontSize: 12, flex: 1 },
-  modes: { flexDirection: 'row', borderRadius: radius['3xl'], overflow: 'hidden' },
+  modes: { flexDirection: 'row', borderRadius: radius.control, overflow: 'hidden' },
   mode: {
     flexGrow: 1,
     flexBasis: 0,
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    borderRadius: radius.xl,
+    borderRadius: radius.control,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },

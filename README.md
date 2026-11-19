@@ -132,7 +132,9 @@ phone"). Install that root on the phone as usual; the app is built to trust user
 - `src/components/native/` — the form controls: buttons, text fields, the switch, the segmented
   choice and the slider, all HeroUI Native (`heroui-native`, the native sibling of the dashboard's
   HeroUI). Uniwind compiles `src/global.css`, which carries the dashboard's theme tokens and its
-  4px `--radius`, so both apps draw the same colours and corners.
+  4px `--radius`, so both apps draw the same colours and corners: `radius.control` (4px) for
+  controls and `radius.container` (8px) for cards and rows, as in the dashboard's
+  `docs/design-principles.md`.
   Confirmations are HeroUI dialogs (`confirm`, mounted once by `ConfirmHost`), a heater command the
   heater never confirms is a HeroUI toast, and the dial ticks the phone's haptics.
 - `src/components/<domain>/` — the cards each tab stacks. Gauges, the dial, the van diagram and

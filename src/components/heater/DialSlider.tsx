@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   step: {
     width: 44,
     height: 44,
-    borderRadius: radius['3xl'],
+    borderRadius: radius.control,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

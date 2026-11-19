@@ -14,30 +14,41 @@
   /* The dashboard's base radius: a quarter of HeroUI's default, and every radius derives from it. */
   --radius: 0.25rem;
   --field-radius: 0.25rem;
+  /* The two corner sizes, the dashboard's rule (its docs/design-principles.md, "Corner radii"):
+     controls 4px, containers 8px, and a circle only for what is round. `radius` in `src/theme`
+     holds the same two for styles written in JavaScript. */
+  --radius-control: var(--radius);
+  --radius-container: calc(var(--radius) * 2);
 }
 
 /*
- * Where HeroUI Native's component shapes differ from HeroUI web's, take the web's, so a control
- * has the same corners on the phone as on the kiosk (`@heroui/styles` components/*.css): buttons
- * are `rounded-3xl` at every size, and the switch is a squared track (`rounded-xl`) with a squared
- * thumb (`rounded-lg`), not a pill. The slider's thumb face is `rounded-lg` there too.
+ * HeroUI Native's components on the two sizes, as the dashboard maps HeroUI web's in its
+ * `src/index.css`: buttons, tabs, switches and sliders are controls, dialogs are containers.
  */
 @layer components {
+  .button__root--size-sm,
+  .button__root--size-md,
   .button__root--size-lg,
-  .button__background--size-lg {
-    border-radius: var(--radius-3xl);
-  }
-
-  .switch__root {
-    border-radius: var(--radius-xl);
-  }
-
-  .switch__thumb {
-    border-radius: var(--radius-lg);
-  }
-
+  .button__background--size-sm,
+  .button__background--size-md,
+  .button__background--size-lg,
+  .tabs__list--variant-primary,
+  .tabs__list-background,
+  .tabs__scroll-view--variant-primary,
+  .tabs__indicator--variant-primary,
+  .switch__root,
+  .switch__thumb,
+  .slider__track,
+  .slider__track-background,
+  .slider__fill,
+  .slider__thumb-container,
   .slider__thumb-knob {
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-control);
+  }
+
+  .dialog__content,
+  .dialog__content-background {
+    border-radius: var(--radius-container);
   }
 
   /* The segmented choice (`Segmented`, HeroUI tabs) reads as the dashboard's toggle group: the

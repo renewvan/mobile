@@ -176,7 +176,7 @@ export function RelayPanels({
 }
 
 const styles = StyleSheet.create({
-  panel: { padding: 16, gap: 16, borderRadius: radius['2xl'] },
+  panel: { padding: 16, gap: 16, borderRadius: radius.container },
   panelTitle: { fontSize: 14, fontWeight: '500' },
   channel: { gap: 6 },
   channelTitle: {

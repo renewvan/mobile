@@ -40,7 +40,7 @@ function HeaderActions() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={attention ? 'Settings, needs attention' : 'Settings'}
-        android_ripple={{ color: colors.default, borderless: true, radius: 22 }}
+        android_ripple={{ color: colors.default }}
         hitSlop={8}
         onPress={() => router.push('/settings')}
         style={styles.menu}
@@ -58,9 +58,17 @@ function HeaderActions() {
 
 const styles = StyleSheet.create({
   right: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  demo: { borderRadius: radius.lg, paddingHorizontal: 10, paddingVertical: 3 },
+  demo: { borderRadius: radius.control, paddingHorizontal: 10, paddingVertical: 3 },
   demoText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-  menu: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  // The ripple stays inside the button, so it takes the theme's corners instead of a circle.
+  menu: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.control,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   dot: {
     position: 'absolute',
     top: 2,

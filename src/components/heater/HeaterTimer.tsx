@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   step: {
     width: 48,
     height: 48,
-    borderRadius: radius['3xl'],
+    borderRadius: radius.control,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   field: {
     minWidth: 0,
     height: 44,
-    borderRadius: radius.xl,
+    borderRadius: radius.control,
     justifyContent: 'center',
     paddingHorizontal: 28,
     opacity: 0.5,

@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
   map: { flex: 1, overflow: 'hidden', backgroundColor: '#262830' },
   card: { flex: 0, height: 320 },
   glass: {
-    borderRadius: radius.xl,
+    borderRadius: radius.control,
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: 'rgba(255,255,255,0.1)',
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -602,6 +602,6 @@ const styles = StyleSheet.create({
   detail: { color: 'rgba(255,255,255,0.7)', fontSize: 12 },
   figure: { color: '#ffffff', fontSize: 14 },
   strong: { fontWeight: '600' },
-  fix: { borderRadius: radius['2xl'], paddingHorizontal: 8, paddingVertical: 2 },
+  fix: { borderRadius: radius.control, paddingHorizontal: 8, paddingVertical: 2 },
   fixText: { fontSize: 12, fontWeight: '600' },
 })
