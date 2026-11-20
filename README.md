@@ -219,6 +219,24 @@ or locally with `cd android && ./gradlew assembleRelease` after `npx expo prebui
 directory is generated (Continuous Native Generation) and not committed: native settings live in
 `app.json` and `plugins/`.
 
+## Over-the-air updates
+
+The store build carries `expo-updates` with the `fingerprint` runtime version, so an update only
+reaches builds whose native code matches. Builds on the `preview` and `production` profiles read the
+channel of the same name; `development` has none. Settings › About shows the running update id and
+a Check for updates button (then Restart to apply); an update is otherwise applied on the next cold
+start, with no banner.
+
+- Merging to `main` publishes to `preview` once the Tests workflow passes (`.github/workflows/update.yml`,
+  needs the `EXPO_TOKEN` secret).
+- Production is a manual promotion: run the "Publish update" workflow with `promote_to_production`.
+- **Rolling back**: republish the previous good update to the channel's branch, e.g.
+  `npx eas-cli@latest update:republish --group <previous-group-id> --branch production`
+  (`npx eas-cli@latest update:list --branch production` lists the groups), or
+  `update:rollback-to-embedded` to return to the update built into the store binary.
+- A change to native code (a new native module, a config plugin) changes the fingerprint and needs a
+  new store build; JS and asset changes do not.
+
 ## Manual verification
 
 Verified on an Android 14 emulator against a local broker: the five tabs with `driver-demo`'s
