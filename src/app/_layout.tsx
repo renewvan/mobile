@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { AlertsProvider } from '@/alerts/AlertsProvider'
 import { ConfirmHost } from '@/components/native'
 import { RenewvanBusProvider } from '@/bus/RenewvanBusProvider'
+import { PositionProvider } from '@/location/PositionProvider'
 import { PreferencesProvider } from '@/preferences/PreferencesProvider'
 import { SessionProvider, useSession } from '@/session/SessionProvider'
 import { useTheme } from '@/theme'
@@ -54,23 +55,25 @@ function Root() {
   const signedIn = session.status === 'ready'
   return (
     <RenewvanBusProvider config={session.connection?.config ?? null}>
-      <AlertsProvider>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-          }}
-        >
-          <Stack.Protected guard={signedIn}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="alerts" />
-          </Stack.Protected>
-          <Stack.Protected guard={!signedIn}>
-            <Stack.Screen name="sign-in" options={{ animation: 'fade' }} />
-          </Stack.Protected>
-        </Stack>
-      </AlertsProvider>
+      <PositionProvider>
+        <AlertsProvider>
+          <StatusBar style={isDark ? 'light' : 'dark'} />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+            }}
+          >
+            <Stack.Protected guard={signedIn}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="alerts" />
+            </Stack.Protected>
+            <Stack.Protected guard={!signedIn}>
+              <Stack.Screen name="sign-in" options={{ animation: 'fade' }} />
+            </Stack.Protected>
+          </Stack>
+        </AlertsProvider>
+      </PositionProvider>
     </RenewvanBusProvider>
   )
 }

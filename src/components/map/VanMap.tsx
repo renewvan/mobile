@@ -57,6 +57,7 @@ import {
   VAN_TYRE_PATHS,
 } from '@/components/art/vanPaths'
 import { tabular } from '@/components/ui'
+import { accuracyRadius } from './accuracyRing'
 import { basemapStyle, type MapTheme } from '@/lib/mapStyle'
 import { sideViewRotation, tiltReading } from '@/lib/tilt'
 import { compassPoint, facesLeft, headingDeg } from '@/lib/vanMarker'
@@ -272,18 +273,30 @@ function Readout({ record, heading }: { record: Gps; heading: number | null }) {
 function PositionNotice({
   status,
   requestPermission,
-}: Pick<PositionState, 'status' | 'requestPermission'>) {
+  record,
+}: Pick<PositionState, 'status' | 'requestPermission'> & { record: Gps | undefined }) {
   const blocked = status?.status === 'denied' && !status.canAskAgain
   const canRequest =
     status !== null &&
     (status.status === 'undetermined' || (status.status === 'denied' && status.canAskAgain))
+  // A granted phone is only waiting for its first fix; a van with a GPS record has no fix itself.
+  const finding = status?.status === 'granted'
   return (
     <Glass style={[styles.readout, styles.notice]}>
-      <MapPin size={16} color="#ef4444" />
+      <MapPin size={16} color={finding ? '#ffffff' : '#ef4444'} />
       <View style={styles.noticeText}>
         <Text style={styles.place}>
-          No position. This van has no GPS, and this phone&apos;s location is off.
+          {finding
+            ? "Finding this phone's position…"
+            : record
+              ? 'No GPS fix yet'
+              : 'No position. This van has no GPS, and this phone’s location is off.'}
         </Text>
+        {!finding && record && (
+          <Text style={styles.detail}>
+            Tracking {record.satellites_in_use} satellite(s), waiting for a fix.
+          </Text>
+        )}
         {blocked && <Text style={styles.detail}>Location is off for this app</Text>}
         {blocked ? (
           <Button size="sm" onPress={() => void Linking.openSettings()}>
@@ -497,7 +510,7 @@ const VanMapView = memo(function VanMapView({
         {record && source === 'van' ? (
           <Readout record={record} heading={heading} />
         ) : source === 'none' ? (
-          <PositionNotice status={status} requestPermission={requestPermission} />
+          <PositionNotice status={status} requestPermission={requestPermission} record={record} />
         ) : null}
       </View>
     </View>
@@ -538,15 +551,9 @@ const MapCanvas = memo(function MapCanvas({
   vanColor: string
 }) {
   const accuracyStyle: CircleLayerStyle = {
-    // MapLibre circles are screen pixels: this zoom expression keeps the radius in metres.
+    // MapLibre circles are screen pixels: the radius is interpolated over zoom to stay in metres.
     circleRadius:
-      accuracy === null || latitude === undefined
-        ? 0
-        : [
-            '/',
-            accuracy,
-            ['/', 156543.03392 * Math.cos((latitude * Math.PI) / 180), ['^', 2, ['zoom']]],
-          ],
+      accuracy === null || latitude === undefined ? 0 : accuracyRadius(accuracy, latitude),
     circleColor: '#0485f7',
     circleOpacity: 0.15,
     circleStrokeColor: '#0485f7',
