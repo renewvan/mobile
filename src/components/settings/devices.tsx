@@ -117,6 +117,7 @@ const byName = (a: string, b: string) => a.localeCompare(b, undefined, { sensiti
 const byNumericId = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true })
 
 const NOT_SUPPORTED = 'Not supported by this app version'
+const NOT_SUPPORTED_CHIP = 'Not supported'
 
 function unsupportedDetail({ kind, types }: UnsupportedDriver): string {
   return kind === 'unsupported'
@@ -212,11 +213,9 @@ export function DevicesView() {
             <NavRow
               key={row.key}
               label={row.name}
-              description={
-                unsupported.some((u) => u.key === row.key)
-                  ? `${NOT_SUPPORTED}. ${describeDriver(row)}`
-                  : describeDriver(row)
-              }
+              description={describeDriver(row)}
+              badge={unsupported.some((u) => u.key === row.key) ? NOT_SUPPORTED_CHIP : undefined}
+              badgeLabel={NOT_SUPPORTED}
               tone={TONE[row.tone]}
               dim={row.dim}
               onPress={() => openSettings('driver', row.key)}
@@ -338,7 +337,7 @@ export function DriverInfoView({ id }: { id: string }) {
 export function TanksView() {
   const { state } = useSettingsData()
   const ids = sortTankIds(Object.keys(state.tanks))
-  if (ids.length === 0) return <Empty>No tanks found. Waiting for driver-tank to publish.</Empty>
+  if (ids.length === 0) return <Empty>No tanks found.</Empty>
   return (
     <Group>
       {ids.map((id) => {
@@ -484,7 +483,7 @@ function lockReason(heater: Heater): string | undefined {
   if (heater.commands_enabled !== true) return 'Read-only! - Commands are turned off.'
   if (!canChangeSettings(heater)) return 'The heater is not ready for a change right now.'
   if (sensorLocked(operatingMode(heater))) {
-    return 'The heater does not accept a sensor change in this mode. Switch to Temperature mode on the Climate tab first.'
+    return 'The heater does not accept a sensor change in this mode. Switch to Levels › Temperature first.'
   }
   return undefined
 }
@@ -690,8 +689,8 @@ export function PrimaryBatteryView() {
         </Note>
       )}
       <Note>
-        The battery the Power tab, the Start tab and the dashboard read. It is one choice shared by
-        every screen of this van.
+        The battery Energy, Home and the dashboard read. It is one choice shared by every screen of
+        this van.
       </Note>
     </>
   )
@@ -1074,7 +1073,7 @@ function RelayInstance({ id }: { id: string }) {
       </Group>
       <Group
         title="Group"
-        note="Which panel of the Relays tab this relay sits in. Add or rename groups under Display & Appearance › Relays."
+        note="Which panel of the Controls tab this relay sits in. Add or rename groups under Settings › Controls."
       >
         <RadioList
           label="Group"
