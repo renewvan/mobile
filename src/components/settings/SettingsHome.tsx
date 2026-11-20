@@ -10,6 +10,7 @@ import {
 } from 'lucide-react-native'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
+import { useCapabilities } from '@/hooks/useCapabilities'
 import { driversSummary, unsupportedDrivers } from '@/lib/drivers'
 import { gpsSummary } from '@/lib/gps'
 import { routerDriver, routerName } from '@/lib/routerDriver'
@@ -32,6 +33,7 @@ export function SettingsHome() {
   const { status, settled } = useRenewvanBus()
   const { openCount } = useAlerts()
   const { alertsEnabled } = usePreferences()
+  const capabilities = useCapabilities()
   const icon = { size: 22, color: colors.muted }
   return (
     <SettingsScreen title="Settings">
@@ -68,12 +70,14 @@ export function SettingsHome() {
           attention={openCount > 0}
           onPress={() => openSettings('alerts')}
         />
-        <NavRow
-          icon={<Wifi {...icon} />}
-          label="Connectivity"
-          description={`${routerName(routerDriver(drivers))}, Hub, Tailscale`}
-          onPress={() => openSettings('connectivity')}
-        />
+        {capabilities.router.state === 'present' && (
+          <NavRow
+            icon={<Wifi {...icon} />}
+            label="Connectivity"
+            description={`${routerName(routerDriver(drivers))}, Hub, Tailscale`}
+            onPress={() => openSettings('connectivity')}
+          />
+        )}
       </Group>
       <Group title="Advanced">
         <NavRow

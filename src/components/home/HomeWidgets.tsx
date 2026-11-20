@@ -25,8 +25,8 @@ function open(type: CircleType) {
 
 /**
  * One flat, scrolling row in group order: a circle per entity type with its reading and name,
- * dimmed with a dash when the van has none (or its driver is offline). Position is not here: the
- * map widget covers it.
+ * dimmed with a dash when the van has none, or 'Offline' when its driver is offline. Position is
+ * not here: the map widget covers it.
  */
 export function StatusCircles({
   capabilities,
@@ -53,12 +53,12 @@ export function StatusCircles({
         const { state: presence, offline } = capabilities[type]
         const Icon = TYPE_ICONS[type]
         const present = presence === 'present'
-        const value = present ? values[type] : '–'
+        const value = !present ? '–' : offline ? 'Offline' : values[type]
         return (
           <Pressable
             key={type}
             accessibilityRole="button"
-            accessibilityLabel={`${LABELS[type]}: ${present ? `${value}${offline ? ', offline' : ''}` : 'not installed'}`}
+            accessibilityLabel={`${LABELS[type]}: ${present ? value : 'not installed'}`}
             onPress={() => open(type)}
             style={[styles.col, { opacity: present && !offline ? 1 : present ? 0.55 : 0.4 }]}
           >
@@ -112,8 +112,10 @@ export function GroupCard({
               <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: '500' }}>
                 {LABELS[type]}
               </Text>
-              {count > 0 ? (
-                <Text style={{ color: colors.muted, fontSize: 12 }}>{count}</Text>
+              {offline || count > 0 ? (
+                <Text style={{ color: colors.muted, fontSize: 12 }}>
+                  {offline ? 'Offline' : count}
+                </Text>
               ) : null}
             </View>
           )
