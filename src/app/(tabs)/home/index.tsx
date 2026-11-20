@@ -102,7 +102,15 @@ export default function StartTab() {
       case 'group-water':
       case 'group-climate':
       case 'group-van':
-        return <GroupCard id={id.slice(6) as GroupId} capabilities={capabilities} />
+        return (
+          <GroupCard
+            id={id.slice(6) as GroupId}
+            capabilities={capabilities}
+            state={state}
+            demoMode={demoMode}
+            commands={commands}
+          />
+        )
       case 'temperature':
         return <TemperaturesCard temperatures={temperatures} />
       case 'map':
@@ -172,11 +180,15 @@ export default function StartTab() {
         // Readings are strings: compared by value, so the circles redraw only when one changes.
         return [colors, capabilities, hiddenStatusTypes, ...Object.values(statusValues)]
       case 'group-energy':
+        return [colors, capabilities, batteries, solar, chargers]
       case 'group-controls':
+        return [colors, capabilities, state.relays, demoMode, commands]
       case 'group-water':
+        return [colors, capabilities, tanks]
       case 'group-climate':
+        return [colors, capabilities, heaters, temperatures]
       case 'group-van':
-        return [colors, capabilities]
+        return [colors, capabilities, state.gps, tilt, state.routers]
       case 'temperature':
         return [colors, temperatures]
       case 'map':
