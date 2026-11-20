@@ -23,6 +23,15 @@ export function useAppHeaderOptions() {
     headerStyle: { backgroundColor: colors.surface },
     headerLeft: () => <LogoLockup size={26} />,
     headerRight: () => <HeaderActions />,
+    // iOS 26 puts Liquid Glass behind every bar item. The app is flat like the dashboard and its own
+    // TabBar, so both sides opt out. These override `headerLeft`/`headerRight` on iOS only.
+    // Unstable API: recheck on each SDK upgrade.
+    unstable_headerLeftItems: () => [
+      { type: 'custom' as const, element: <LogoLockup size={26} />, hidesSharedBackground: true },
+    ],
+    unstable_headerRightItems: () => [
+      { type: 'custom' as const, element: <HeaderActions />, hidesSharedBackground: true },
+    ],
   }
 }
 
