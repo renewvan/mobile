@@ -19,6 +19,8 @@ export interface BatteryDialView {
   timeToGo?: string
   /** What the battery is doing, shown in place of `timeToGo`. */
   state?: string
+  /** The source's name, e.g. `SmartShunt 500A`, when it publishes one. */
+  source?: string
   /** Taking charge (above `IDLE_W`): the dial then shows the travelling band. */
   charging: boolean
 }
@@ -34,8 +36,9 @@ export function batteryDial(
   colors: Pick<Palette, 'accent' | 'danger'>,
   selection?: string,
 ): BatteryDialView | undefined {
-  const battery = primaryBattery(batteries, selection)?.battery
-  if (!battery) return undefined
+  const primary = primaryBattery(batteries, selection)
+  if (!primary) return undefined
+  const { battery } = primary
   const pct = Math.min(100, Math.max(0, battery.soc_pct))
   const state =
     battery.power_w > IDLE_W ? 'charging' : battery.power_w < -IDLE_W ? 'discharging' : 'idle'
@@ -52,6 +55,7 @@ export function batteryDial(
     sub: `${battery.voltage_v.toFixed(2)}V / ${Math.round(Math.abs(battery.power_w))}W`,
     timeToGo: runtime,
     state: runtime === undefined ? BATTERY_STATE_LABEL[state] : undefined,
+    source: battery.name?.trim() || undefined,
     charging: state === 'charging',
   }
 }

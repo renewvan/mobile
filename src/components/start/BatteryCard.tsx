@@ -230,7 +230,18 @@ export function BatteryCard({
   const { colors } = useTheme()
   const view = batteryDial(batteries, colors, selection)
   return (
-    <TitledCard icon={<MutedIcon icon={CarBattery} />} title="Battery">
+    <TitledCard
+      icon={<MutedIcon icon={CarBattery} />}
+      title="Battery"
+      right={
+        view?.source ? (
+          <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12, flexShrink: 1 }}>
+            {view.source}
+          </Text>
+        ) : undefined
+      }
+      contentStyle={styles.center}
+    >
       {view ? (
         <BatteryDial view={view} />
       ) : (
@@ -241,6 +252,7 @@ export function BatteryCard({
 }
 
 const styles = StyleSheet.create({
+  center: { alignItems: 'center', justifyContent: 'center' },
   dial: { width: '100%', aspectRatio: 1, alignSelf: 'center', marginTop: 12 },
   readout: {
     position: 'absolute',
