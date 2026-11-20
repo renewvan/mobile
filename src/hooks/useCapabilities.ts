@@ -9,11 +9,14 @@ import type { EntityType } from '@/lib/drivers'
  */
 export function useCapabilities(): Record<EntityType, Capability> {
   const { state, settled, status } = useRenewvanBus()
-  return useMemo(() => {
+  const capabilities = useMemo(() => {
     const capabilities = capabilitiesOf(state, settled)
     if (status === 'connected') return capabilities
     return Object.fromEntries(
       Object.entries(capabilities).map(([type, c]) => [type, { ...c, offline: false }]),
     ) as Record<EntityType, Capability>
   }, [state, settled, status])
+  // The same object until a capability really changes: `state` is new on every bus message.
+  const key = JSON.stringify(capabilities)
+  return useMemo(() => JSON.parse(key) as Record<EntityType, Capability>, [key])
 }

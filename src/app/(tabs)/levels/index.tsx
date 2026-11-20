@@ -1,32 +1,27 @@
 import { useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { LEVELS_PAGES, type LevelsPage } from '@/components/levels/pages'
 import { TanksContent, TemperatureContent, TiltContent } from '@/components/levels/LevelsContent'
 import { Screen } from '@/components/Screen'
 import { alpha, radius, useTheme } from '@/theme'
 
-const PAGES = [
-  { id: 'tanks', label: 'Tanks' },
-  { id: 'temperature', label: 'Temperature' },
-  { id: 'tilt', label: 'Tilt' },
-] as const
-
 /** The Levels tab: Tanks, Temperature and Tilt as sub-tabs (pills) over one page. */
 export default function LevelsTab() {
   const { colors } = useTheme()
-  const [page, setPage] = useState<(typeof PAGES)[number]['id']>('tanks')
+  const [page, setPage] = useState<LevelsPage>('tanks')
   // Home's circles open a given page; `at` changes on every tap so the same page can be asked twice.
   const { page: asked, at } = useLocalSearchParams<{ page?: string; at?: string }>()
   const [seen, setSeen] = useState(at)
   if (at !== seen) {
     setSeen(at)
-    const found = PAGES.find((p) => p.id === asked)
+    const found = LEVELS_PAGES.find((p) => p.id === asked)
     if (found) setPage(found.id)
   }
   return (
     <Screen>
       <View accessibilityRole="tablist" style={styles.pills}>
-        {PAGES.map(({ id, label }) => {
+        {LEVELS_PAGES.map(({ id, label }) => {
           const selected = page === id
           return (
             <Pressable

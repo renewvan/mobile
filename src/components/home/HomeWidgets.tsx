@@ -1,8 +1,7 @@
 import { router } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { openSettings } from '@/components/settings/routes'
-import { statusValue } from '@/components/home/statusValues'
-import type { RenewvanBusState } from '@/types'
+import { destinationOf, type CircleType } from '@/components/home/destinations'
 import { TYPE_ICONS } from '@/components/home/typeMeta'
 import { TitledCard } from '@/components/ui'
 import type { Capability } from '@/lib/capabilities'
@@ -15,28 +14,13 @@ const LABELS = Object.fromEntries(ENTITY_TYPES.map((e) => [e.type, e.label])) as
   string
 >
 
-/** Where a type's circle goes: the tab, and the page inside it when the tab has several. */
-function open(type: EntityType) {
-  switch (type) {
-    case 'battery':
-    case 'solar':
-    case 'charger':
-      return router.navigate('/energy')
-    case 'relay':
-    case 'heater':
-      return router.navigate('/controls')
-    case 'tank':
-    case 'temperature':
-    case 'tilt':
-      return router.navigate({
-        pathname: '/levels',
-        params: { page: type === 'tank' ? 'tanks' : type, at: String(Date.now()) },
-      })
-    case 'router':
-      return openSettings('cellular')
-    case 'gps':
-      return openSettings('map')
-  }
+/** Opens a circle's destination. `at` changes on every tap so Levels can be asked for the same page twice. */
+function open(type: CircleType) {
+  const d = destinationOf(type)
+  if ('settings' in d) openSettings(d.settings)
+  else if ('page' in d) {
+    router.navigate({ pathname: d.pathname, params: { page: d.page, at: String(Date.now()) } })
+  } else router.navigate(d.pathname)
 }
 
 /**
@@ -47,14 +31,18 @@ function open(type: EntityType) {
 export function StatusCircles({
   capabilities,
   hidden,
-  state,
+  values,
 }: {
   capabilities: Record<EntityType, Capability>
   hidden: readonly EntityType[]
-  state: RenewvanBusState
+  /** Each type's reading, from `statusValue`. */
+  values: Record<EntityType, string>
 }) {
   const { colors } = useTheme()
-  const types = GROUPS.flatMap((g) => g.types).filter((t) => t !== 'gps' && !hidden.includes(t))
+  const types = GROUPS.flatMap((g) => g.types).filter(
+    (t): t is CircleType => t !== 'gps' && !hidden.includes(t),
+  )
+  if (types.length === 0) return null
   return (
     <ScrollView
       horizontal
@@ -65,7 +53,7 @@ export function StatusCircles({
         const { state: presence, offline } = capabilities[type]
         const Icon = TYPE_ICONS[type]
         const present = presence === 'present'
-        const value = present ? statusValue(type, state) : '–'
+        const value = present ? values[type] : '–'
         return (
           <Pressable
             key={type}
@@ -152,7 +140,7 @@ export function Skeleton({ height = 96 }: { height?: number }) {
 
 const styles = StyleSheet.create({
   circles: { gap: 12 },
-  col: { alignItems: 'center', gap: 4, width: 64 },
+  col: { alignItems: 'center', gap: 4, width: 72 },
   circle: {
     width: 52,
     height: 52,

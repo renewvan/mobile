@@ -23,7 +23,8 @@ import { TankCard } from '@/components/tanks/TankCard'
 import { Card, EmptyState, MutedIcon, NoData, TitledCard } from '@/components/ui'
 import { useFirstSolarWithHistory } from '@/hooks/useSolarYieldHistory'
 import { useNow } from '@/hooks/useNow'
-import { heaterDriversOnline } from '@/lib/drivers'
+import { statusValue } from '@/components/home/statusValues'
+import { ENTITY_TYPES, heaterDriversOnline, type EntityType } from '@/lib/drivers'
 import { iconKey } from '@/lib/entityIcons'
 import { usePreferences } from '@/preferences/PreferencesProvider'
 import { shownWidgets } from '@/preferences/preferences'
@@ -82,11 +83,19 @@ export default function StartTab() {
     )
   }
 
+  const statusValues = Object.fromEntries(
+    ENTITY_TYPES.map(({ type }) => [type, statusValue(type, state)]),
+  ) as Record<EntityType, string>
+
   const widget = (id: WidgetId): ReactNode => {
     switch (id) {
       case 'status':
         return (
-          <StatusCircles capabilities={capabilities} hidden={hiddenStatusTypes} state={state} />
+          <StatusCircles
+            capabilities={capabilities}
+            hidden={hiddenStatusTypes}
+            values={statusValues}
+          />
         )
       case 'group-energy':
       case 'group-controls':
@@ -160,7 +169,8 @@ export default function StartTab() {
   const inputsOf = (id: WidgetId): readonly unknown[] => {
     switch (id) {
       case 'status':
-        return [colors, capabilities, hiddenStatusTypes, state]
+        // Readings are strings: compared by value, so the circles redraw only when one changes.
+        return [colors, capabilities, hiddenStatusTypes, ...Object.values(statusValues)]
       case 'group-energy':
       case 'group-controls':
       case 'group-water':
