@@ -38,9 +38,29 @@ Sources: <https://www.home-assistant.io/blog/2024/03/04/dashboard-chapter-1/>, <
 - Navigation chrome: the dashboards page documents Views, Sections and a **Sidebar** (not a bottom tab bar); the companion app wraps that web UI. I could not verify the exact mobile navigation of the companion apps from first-party text, so nothing more is claimed.
 - Takeaway for this app: the proven way to stay release-free is **structure derived from data** (areas/instances) over a **fixed vocabulary of cards/pages per entity type**, with an explicit fallback bucket. The van has no Areas today; the nearest existing shared grouping is relay groups (a hub setting).
 
+## 2d. Homey (Athom): <https://homey.app/>
+
+A smart-home platform (hubs: Homey Pro, Pro mini, Cloud, Self-Hosted Server; apps and ~70,000 devices from ~2,000 brands) with a mobile app, a web app and a kiosk-style dashboard mode. Sources: first-party feature pages <https://homey.app/en-us/features/devices/> and <https://homey.app/en-us/features/dashboards/> and their product screenshots (marketing images, so the UI may not be today's exact build). Screenshots saved in `assets/homey/`.
+
+![Homey app: Home, Devices, Flow, Energy, More](assets/homey/app-screenshot.png)
+
+What the screenshots and copy show:
+- **Bottom bar of five fixed tabs: Home, Devices, Flow, Energy, More.** Fixed, not per device. Energy (solar, battery, grid) is a first-class tab; Flow is automation; More holds the rest.
+- **The Home tab is a dashboard grouped by zone (room)**: "My Home" with summary tiles at the top (Lights "8 turned on", Activity, Speakers "2 playing", **Energy "893 W"**), then **Moods** (presets), then each room ("Living Room >", "Hallway >") with a **grid of uniform device tiles**. Each tile is the same shape for every device (icon, name, one state value or toggle: a colour dot, a warning badge, "19.4 C", "392 W", "21"). The room header has a chevron: tap it to drill into the room.
+- **One uniform control interface for any device type**: "No matter the device, Homey offers a uniform interface for each one. Switches, lights, blinds, thermostats, sensors, vacuum cleaners, plugs, appliances, and solar panels are all included" (features/devices). That is how it handles thousands of devices with no per-device screens.
+- **Dashboards are user-built**: a dashboard has a title with a dropdown switcher ("My Home", "Workshop"), an edit (pencil) button, and widgets: built-in ones (lights, thermostats, media players, Flows, Moods, Insights, Energy) plus **app widgets made by the community** on Homey Pro. Widgets mix controls (play/stop buttons, a thermostat stepper, a media player) with live values (key/value tiles, a memory-usage graph). Dashboards also have a kiosk mode for a wall tablet (the same idea as this project's kiosk dashboard).
+
+![Homey dashboard: My Home](assets/homey/my-home-mobile.png) ![Homey dashboard: Workshop](assets/homey/workshop-mobile.png)
+
+Takeaways relevant to this app:
+- Two of the largest home apps (Homey and Home Assistant) both keep a **generic tile/card for what they don't specifically know** (Homey's uniform device tile, Home Assistant's "Other devices" view). That is evidence **against** the earlier decision "no generic card for unsupported entity types".
+- A fixed five-tab bar with a dashboard first and **Energy as its own tab** is the shape here; for a van, "power" (battery, solar, chargers) maps to that role.
+- Tiles are **status-first and tappable**: the state is on the tile, the tap opens detail, and the toggle is on the tile for the simple case (relays).
+- Homey's "app widgets" are shipped by third-party apps at runtime: a plugin model this app cannot copy in React Native without code loading, and not necessary while the entity-type vocabulary is fixed.
+
 ## 2c. What could not be researched
 
-Apple Home, Google Home, SmartThings, Tesla, Truma, Garmin: the first-party support pages are app-gated, script-rendered or blocked to plain requests (403 / 404 / empty), and a search engine was unavailable. They are **not** covered and nothing here is said about them from memory. Screenshots or the specific apps the owner likes would be a better source than guessing.
+Apple Home, Google Home, SmartThings, Tesla, Truma, Garmin (Homey and Home Assistant were reached by other routes, see 2b and 2d): the first-party support pages are app-gated, script-rendered or blocked to plain requests (403 / 404 / empty), and a search engine was unavailable. They are **not** covered and nothing here is said about them from memory. Screenshots or the specific apps the owner likes would be a better source than guessing.
 
 ## 3. What this app does today (internal audit)
 
