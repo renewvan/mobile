@@ -10,7 +10,7 @@ import {
 } from 'lucide-react-native'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
-import { driversSummary } from '@/lib/drivers'
+import { driversSummary, unsupportedDrivers } from '@/lib/drivers'
 import { gpsSummary } from '@/lib/gps'
 import { routerDriver, routerName } from '@/lib/routerDriver'
 import { usePreferences } from '@/preferences/PreferencesProvider'
@@ -29,7 +29,7 @@ export function SettingsHome() {
   const { colors } = useTheme()
   const { drivers, state } = useSettingsData()
   const { connection } = useSession()
-  const { status } = useRenewvanBus()
+  const { status, settled } = useRenewvanBus()
   const { openCount } = useAlerts()
   const { alertsEnabled } = usePreferences()
   const icon = { size: 22, color: colors.muted }
@@ -39,6 +39,7 @@ export function SettingsHome() {
         icon={<Workflow {...icon} />}
         label="Devices"
         description={driversSummary(drivers)}
+        attention={settled && unsupportedDrivers(state).length > 0}
         onPress={() => openSettings('devices')}
       />
       <Group title="Hub">

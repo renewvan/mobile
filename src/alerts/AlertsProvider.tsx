@@ -13,9 +13,6 @@ import { dismissAlert, notifyAlert, useOpenAlertsOnTap } from './notifications'
 
 const STORAGE_KEY = 'renewvan.alertHistory.v1'
 
-/** How long the retained state is given to arrive after a connect before absence means "cleared". */
-const SETTLE_MS = 3000
-
 interface AlertsValue {
   /** What the list shows, newest first: the log without the alerts the user deleted while open. */
   entries: AlertEntry[]
@@ -30,12 +27,11 @@ interface AlertsValue {
 const AlertsContext = createContext<AlertsValue | null>(null)
 
 export function AlertsProvider({ children }: { children: ReactNode }) {
-  const { state, status, tailscale, demoMode } = useRenewvanBus()
+  const { state, status, settled, tailscale, demoMode } = useRenewvanBus()
   const { connection } = useSession()
   const { alertsEnabled } = usePreferences()
   const [entries, dispatch] = useReducer(logReducer, [])
   const [loaded, setLoaded] = useState(false)
-  const [settled, setSettled] = useState(false)
   useOpenAlertsOnTap()
 
   useEffect(() => {
@@ -49,15 +45,6 @@ export function AlertsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loaded) AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(entries)).catch(() => {})
   }, [entries, loaded])
-
-  useEffect(() => {
-    if (status !== 'connected') return
-    const timer = setTimeout(() => setSettled(true), SETTLE_MS)
-    return () => {
-      clearTimeout(timer)
-      setSettled(false)
-    }
-  }, [status])
 
   // Every render: it is a cheap diff that changes nothing (and returns the same array) unless an
   // alert opened or resolved. Signed out there is no van to raise alerts about.
