@@ -15,7 +15,8 @@ const LABELS = Object.fromEntries(ENTITY_TYPES.map((e) => [e.type, e.label])) as
 >
 
 /** Opens a circle's destination. `at` changes on every tap so Levels can be asked for the same page twice. */
-function open(type: CircleType) {
+function open(type: CircleType, present: boolean) {
+  if (!present) return
   const d = destinationOf(type)
   if ('settings' in d) openSettings(d.settings)
   else if ('page' in d) {
@@ -59,7 +60,7 @@ export function StatusCircles({
             key={type}
             accessibilityRole="button"
             accessibilityLabel={`${LABELS[type]}: ${present ? value : 'not installed'}`}
-            onPress={() => open(type)}
+            onPress={() => open(type, present)}
             style={[styles.col, { opacity: present && !offline ? 1 : present ? 0.55 : 0.4 }]}
           >
             <View

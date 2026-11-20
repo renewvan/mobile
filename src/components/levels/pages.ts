@@ -15,3 +15,11 @@ export function availableLevelsPages(
 ): readonly (typeof LEVELS_PAGES)[number][] {
   return LEVELS_PAGES.filter((page) => capabilities[page.capability].state === 'present')
 }
+
+/** The page to show: the chosen one if present, else the first present one, else none. */
+export function resolveLevelsPage(
+  pages: readonly { id: LevelsPage }[],
+  chosen: LevelsPage,
+): LevelsPage | undefined {
+  return pages.some((page) => page.id === chosen) ? chosen : pages[0]?.id
+}

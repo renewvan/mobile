@@ -1,6 +1,7 @@
 import { Heater as HeaterIcon, ToggleLeft } from 'lucide-react-native'
 import { useCommands } from '@/bus/commands'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
+import { controlsSections } from '@/components/controls/sections'
 import { HeaterCard } from '@/components/heater/HeaterCard'
 import { RelayPanels } from '@/components/relays/RelayPanels'
 import { Screen } from '@/components/Screen'
@@ -16,14 +17,15 @@ export default function ControlsTab() {
   const commands = useCommands()
   const capabilities = useCapabilities()
   const { setRelay } = commands
-  const hasHeater = capabilities.heater.state === 'present'
-  const hasRelays = capabilities.relay.state === 'present'
+  const sections = controlsSections(capabilities)
+  const hasHeater = sections.includes('heater')
+  const hasRelays = sections.includes('relays')
   const loading = capabilities.heater.state === 'loading' || capabilities.relay.state === 'loading'
   const heaterIds = Object.keys(state.heaters).sort()
   const heaterDriverOnline = heaterDriversOnline(state)
   const heaterFrozen = demoMode || !heaterDriverOnline
 
-  if (!hasHeater && !hasRelays) {
+  if (sections.length === 0) {
     return (
       <Screen>
         <EmptyState

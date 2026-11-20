@@ -2,7 +2,12 @@ import { useLocalSearchParams } from 'expo-router'
 import { Droplet } from 'lucide-react-native'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { availableLevelsPages, LEVELS_PAGES, type LevelsPage } from '@/components/levels/pages'
+import {
+  availableLevelsPages,
+  LEVELS_PAGES,
+  resolveLevelsPage,
+  type LevelsPage,
+} from '@/components/levels/pages'
 import { TanksContent, TemperatureContent, TiltContent } from '@/components/levels/LevelsContent'
 import { Screen } from '@/components/Screen'
 import { EmptyState } from '@/components/ui'
@@ -15,7 +20,7 @@ export default function LevelsTab() {
   const capabilities = useCapabilities()
   const pages = availableLevelsPages(capabilities)
   const [chosen, setChosen] = useState<LevelsPage>('tanks')
-  const page = pages.some((candidate) => candidate.id === chosen) ? chosen : pages[0]?.id
+  const page = resolveLevelsPage(pages, chosen)
   // Home's circles open a given page; `at` changes on every tap so the same page can be asked twice.
   const { page: asked, at } = useLocalSearchParams<{ page?: string; at?: string }>()
   const [seen, setSeen] = useState(at)

@@ -4,6 +4,7 @@ import { Text } from 'react-native'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { ChargerCard } from '@/components/power/ChargerCard'
 import { flowFromBus } from '@/components/power/flowModel'
+import { energySections } from '@/components/power/sections'
 import { PowerFlow } from '@/components/power/PowerFlow'
 import { SOLAR_HISTORY_DAYS, SolarCard } from '@/components/power/SolarCard'
 import { Screen } from '@/components/Screen'
@@ -25,9 +26,10 @@ export default function PowerTab() {
   const { powerLayout } = usePreferences()
   const capabilities = useCapabilities()
   const { batteries, solar, chargers } = state
-  const hasBattery = capabilities.battery.state === 'present'
-  const hasSolar = capabilities.solar.state === 'present'
-  const hasCharger = capabilities.charger.state === 'present'
+  const sections = energySections(capabilities)
+  const hasBattery = sections.includes('power')
+  const hasSolar = sections.includes('solar')
+  const hasCharger = sections.includes('chargers')
   const loading = [capabilities.battery, capabilities.solar, capabilities.charger].some(
     (capability) => capability.state === 'loading',
   )
@@ -41,7 +43,7 @@ export default function PowerTab() {
   const namesSource = completeBatteryIds(batteries).length > 1 && primary !== undefined
   const solarRecord = useFirstSolarWithHistory(solar, SOLAR_HISTORY_DAYS)
 
-  if (!hasBattery && !hasSolar && !hasCharger) {
+  if (sections.length === 0) {
     return (
       <Screen>
         <EmptyState

@@ -1,3 +1,4 @@
+import { useCapabilities } from '@/hooks/useCapabilities'
 import { useNow } from '@/hooks/useNow'
 import { busStatusText, cellularTier, networkTypeLabel, uplinkHeadline } from '@/lib/connection'
 import type { DriverTone } from '@/lib/drivers'
@@ -28,17 +29,20 @@ const DRIVER_TONE: Record<DriverTone, StatusTone> = {
 
 export function ConnectivityView() {
   const { drivers, router, routerHealth, routerUpdatedAt, status, tailscale } = useSettingsData()
+  const hasRouter = useCapabilities().router.state === 'present'
   const now = useNow(30_000).getTime()
   const driver = routerDriver(drivers)
   const tier = cellularTier(router?.signal_rsrp_dbm, routerHealth, routerUpdatedAt, now)
   const installed = driver !== undefined || routerUpdatedAt !== undefined
   return (
     <Group>
-      <NavRow
-        label={routerName(driver)}
-        description={installed ? uplinkHeadline(router, tier) : 'Not installed'}
-        onPress={() => openSettings('cellular')}
-      />
+      {hasRouter && (
+        <NavRow
+          label={routerName(driver)}
+          description={installed ? uplinkHeadline(router, tier) : 'Not installed'}
+          onPress={() => openSettings('cellular')}
+        />
+      )}
       <NavRow label="Hub" description={busStatusText(status)} onPress={() => openSettings('hub')} />
       <NavRow
         label="Tailscale"
