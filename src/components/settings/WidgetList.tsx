@@ -75,7 +75,10 @@ export function WidgetList({
   }
   // Rows keep their dragged-to position until the new order has been laid out, then settle: the
   // same commit moves every `top`, so resetting any earlier would flash the old order.
-  useLayoutEffect(reset, [layout]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Keyed by content: the parent filters the layout into a new array on every bus message, and
+  // resetting on identity would cancel a drag in progress.
+  const layoutKey = layout.join(',')
+  useLayoutEffect(reset, [layoutKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const drop = (index: number, target: number) => {
     const next = layoutAfterDrop(layout, index, target, widgets)
