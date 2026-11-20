@@ -1,6 +1,6 @@
 name: Publish update
 
-# The test workflow is the gate: this runs only after it succeeded on main.
+# The test workflow is the gate: this runs only after it succeeded on a push to main (never a PR, so a fork cannot publish).
 on:
   workflow_run:
     workflows: [Tests]
@@ -16,7 +16,7 @@ on:
 
 jobs:
   preview:
-    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -31,7 +31,7 @@ jobs:
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
-      - run: eas update --branch preview --message "$GITHUB_SHA" --non-interactive
+      - run: eas update --branch preview --message "${{ github.event.workflow_run.head_sha }}" --non-interactive
 
   production:
     if: github.event_name == 'workflow_dispatch' && inputs.promote_to_production
