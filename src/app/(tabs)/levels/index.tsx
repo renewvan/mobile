@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { TanksContent, TemperatureContent, TiltContent } from '@/components/levels/LevelsContent'
@@ -14,6 +15,14 @@ const PAGES = [
 export default function LevelsTab() {
   const { colors } = useTheme()
   const [page, setPage] = useState<(typeof PAGES)[number]['id']>('tanks')
+  // Home's circles open a given page; `at` changes on every tap so the same page can be asked twice.
+  const { page: asked, at } = useLocalSearchParams<{ page?: string; at?: string }>()
+  const [seen, setSeen] = useState(at)
+  if (at !== seen) {
+    setSeen(at)
+    const found = PAGES.find((p) => p.id === asked)
+    if (found) setPage(found.id)
+  }
   return (
     <Screen>
       <View accessibilityRole="tablist" style={styles.pills}>

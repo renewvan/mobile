@@ -1,5 +1,6 @@
 import { router } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { openSettings } from '@/components/settings/routes'
 import { statusValue } from '@/components/home/statusValues'
 import type { RenewvanBusState } from '@/types'
 import { TYPE_ICONS } from '@/components/home/typeMeta'
@@ -14,18 +15,28 @@ const LABELS = Object.fromEntries(ENTITY_TYPES.map((e) => [e.type, e.label])) as
   string
 >
 
-/** The tab a type's circle opens. */
-const TAB: Record<EntityType, string> = {
-  battery: '/energy',
-  solar: '/energy',
-  charger: '/energy',
-  relay: '/controls',
-  heater: '/controls',
-  tank: '/levels',
-  temperature: '/levels',
-  tilt: '/levels',
-  router: '/settings',
-  gps: '/settings',
+/** Where a type's circle goes: the tab, and the page inside it when the tab has several. */
+function open(type: EntityType) {
+  switch (type) {
+    case 'battery':
+    case 'solar':
+    case 'charger':
+      return router.navigate('/energy')
+    case 'relay':
+    case 'heater':
+      return router.navigate('/controls')
+    case 'tank':
+    case 'temperature':
+    case 'tilt':
+      return router.navigate({
+        pathname: '/levels',
+        params: { page: type === 'tank' ? 'tanks' : type, at: String(Date.now()) },
+      })
+    case 'router':
+      return openSettings('cellular')
+    case 'gps':
+      return openSettings('map')
+  }
 }
 
 /**
@@ -60,7 +71,7 @@ export function StatusCircles({
             key={type}
             accessibilityRole="button"
             accessibilityLabel={`${LABELS[type]}: ${present ? `${value}${offline ? ', offline' : ''}` : 'not installed'}`}
-            onPress={() => router.navigate(TAB[type] as never)}
+            onPress={() => open(type)}
             style={[styles.col, { opacity: present && !offline ? 1 : present ? 0.55 : 0.4 }]}
           >
             <View
