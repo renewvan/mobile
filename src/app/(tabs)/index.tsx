@@ -6,6 +6,7 @@ import {
   Waves,
   Waypoints,
 } from 'lucide-react-native'
+import { router } from 'expo-router'
 import { memo, useMemo, type ReactNode } from 'react'
 import { useCommands } from '@/bus/commands'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
@@ -166,6 +167,8 @@ export default function StartTab() {
 
   return (
     <Screen>
+      <NativeButton label="SPIKE #25: D headless tabs" onPress={() => router.push('/spike-tabs/home')} />
+      <NativeButton label="SPIKE #25: F native tabs" onPress={() => router.push('/spike-native/home')} />
       {startLayout.length === 0 ? (
         <>
           <EmptyState
