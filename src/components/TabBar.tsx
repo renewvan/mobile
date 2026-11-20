@@ -100,7 +100,8 @@ export function TabBar() {
       <TabList asChild>
         <View
           accessibilityRole="tablist"
-          style={[
+          // A Slot child takes one flat style object, not an array.
+          style={StyleSheet.flatten([
             styles.bar,
             {
               backgroundColor: colors.surface,
@@ -108,7 +109,7 @@ export function TabBar() {
               paddingBottom: insets.bottom,
             },
             keyboard && styles.hidden,
-          ]}
+          ])}
         >
           <TabTrigger name="energy" href="/energy" asChild>
             <Item label="Energy" Icon={Zap} href="/energy" />
