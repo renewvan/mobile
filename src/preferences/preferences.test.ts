@@ -1,6 +1,8 @@
 import {
   DEFAULT_PREFERENCES,
-  DEFAULT_START_LAYOUT,
+  DEFAULT_HOME_LAYOUT,
+  homeLayoutOf,
+  shownWidgets,
   isDefaultLayout,
   layoutAfterDrop,
   moved,
@@ -14,17 +16,11 @@ describe('parsePreferences', () => {
     expect(parsePreferences('[1,2]')).toEqual(DEFAULT_PREFERENCES)
   })
 
-  it('reads the old widget id energy as power-flow', () => {
-    expect(parsePreferences('{"startLayout":["heater","energy"]}').startLayout).toEqual([
-      'heater',
-      'power-flow',
-    ])
-  })
-
   it('reads back what was stored', () => {
     const stored = {
       theme: 'dark',
-      startLayout: ['heater', 'power-flow'],
+      homeLayout: { order: ['heater', 'power-flow'], hidden: ['map'] },
+      hiddenStatusTypes: ['tilt'],
       hiddenTemperatures: ['pi_cpu'],
       devicesSort: 'entity',
       powerLayout: 'van-orbs',
@@ -52,7 +48,7 @@ describe('parsePreferences', () => {
     expect(parsed.theme).toBe('system')
     expect(parsed.devicesSort).toBe('entity')
     expect(parsed.powerLayout).toBe('van-tiles')
-    expect(parsed.startLayout).toEqual(DEFAULT_START_LAYOUT)
+    expect(parsed.homeLayout).toEqual(DEFAULT_HOME_LAYOUT)
     expect(parsed.van).toEqual({
       name: 'Olga',
       brand: '',
@@ -63,12 +59,51 @@ describe('parsePreferences', () => {
     })
   })
 
-  it('drops widgets it does not know and repeats, but keeps an empty layout as a choice', () => {
-    const layout = (startLayout: unknown) =>
-      parsePreferences(JSON.stringify({ startLayout })).startLayout
-    expect(layout(['tilt', 'weather', 'tilt', 'solar'])).toEqual(['tilt', 'solar'])
-    expect(layout([])).toEqual([])
-    expect(layout('tilt')).toEqual(DEFAULT_START_LAYOUT)
+  it('discards the old startLayout and keeps only known widgets and types', () => {
+    expect(parsePreferences('{"startLayout":["heater"]}').homeLayout).toEqual(DEFAULT_HOME_LAYOUT)
+    const read = (homeLayout: unknown, hiddenStatusTypes?: unknown) =>
+      parsePreferences(JSON.stringify({ homeLayout, hiddenStatusTypes }))
+    expect(read({ order: ['tilt', 'weather', 'tilt', 'map'], hidden: 3 }).homeLayout).toEqual({
+      order: ['tilt', 'map'],
+      hidden: [],
+    })
+    expect(read(null, ['tilt', 'pump', 'tilt']).hiddenStatusTypes).toEqual(['tilt'])
+  })
+})
+
+describe('shownWidgets', () => {
+  it('shows the defaults in the default order, the optional cards off', () => {
+    expect(shownWidgets(DEFAULT_HOME_LAYOUT)).toEqual([
+      'status',
+      'map',
+      'group-energy',
+      'group-controls',
+      'group-water',
+      'group-climate',
+      'group-van',
+    ])
+  })
+
+  it('places a default widget new in a release at its default position, and leaves a new optional one off', () => {
+    const stored = { order: ['map', 'group-energy', 'group-van', 'tilt'], hidden: [] } as const
+    expect(shownWidgets(stored)).toEqual([
+      'status',
+      'map',
+      'group-energy',
+      'group-controls',
+      'group-water',
+      'group-climate',
+      'group-van',
+      'tilt',
+    ])
+  })
+
+  it('does not bring back a hidden widget', () => {
+    expect(shownWidgets({ order: ['map', 'status'], hidden: ['status'] })).not.toContain('status')
+  })
+
+  it('round-trips through homeLayoutOf', () => {
+    expect(shownWidgets(homeLayoutOf(['tilt', 'map']))).toEqual(['tilt', 'map'])
   })
 })
 
@@ -95,14 +130,14 @@ describe('alertsEnabled', () => {
 })
 
 describe('layoutAfterDrop', () => {
-  const layout = ['temperature', 'map', 'power-flow'] as const
-  // slots: temperature, map, energy, divider, battery, heater, solar, tilt, fresh-water, grey-water
+  const layout = ['status', 'map', 'power-flow'] as const
+  // slots: status, map, power-flow, divider, then the other widgets as shipped
   it('reorders within the shown widgets', () => {
-    expect(layoutAfterDrop(layout, 0, 2)).toEqual(['map', 'power-flow', 'temperature'])
+    expect(layoutAfterDrop(layout, 0, 2)).toEqual(['map', 'power-flow', 'status'])
   })
 
   it('shows a hidden widget dropped above the divider, at that place', () => {
-    expect(layoutAfterDrop(layout, 5, 1)).toEqual(['temperature', 'heater', 'map', 'power-flow'])
+    expect(layoutAfterDrop(layout, 11, 1)).toEqual(['status', 'heater', 'map', 'power-flow'])
   })
 
   it('hides a shown widget dropped below the divider', () => {
@@ -132,8 +167,9 @@ describe('moved', () => {
 
 describe('isDefaultLayout', () => {
   it('is true only for the shipped widgets in the shipped order', () => {
-    expect(isDefaultLayout(DEFAULT_START_LAYOUT)).toBe(true)
-    expect(isDefaultLayout(moved(DEFAULT_START_LAYOUT, 0, 1))).toBe(false)
-    expect(isDefaultLayout(DEFAULT_START_LAYOUT.slice(1))).toBe(false)
+    const shown = shownWidgets(DEFAULT_HOME_LAYOUT)
+    expect(isDefaultLayout(DEFAULT_HOME_LAYOUT)).toBe(true)
+    expect(isDefaultLayout(homeLayoutOf(moved(shown, 0, 1)))).toBe(false)
+    expect(isDefaultLayout(homeLayoutOf(shown.slice(1)))).toBe(false)
   })
 })

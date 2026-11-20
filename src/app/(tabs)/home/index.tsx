@@ -26,7 +26,10 @@ import { useNow } from '@/hooks/useNow'
 import { heaterDriversOnline } from '@/lib/drivers'
 import { iconKey } from '@/lib/entityIcons'
 import { usePreferences } from '@/preferences/PreferencesProvider'
-import type { StartWidgetId } from '@/preferences/preferences'
+import { shownWidgets } from '@/preferences/preferences'
+import { useCapabilities } from '@/hooks/useCapabilities'
+import { widgetAvailability, type GroupId, type WidgetId } from '@/lib/widgets'
+import { GroupCard, Skeleton, StatusCircles } from '@/components/home/HomeWidgets'
 import { useTheme } from '@/theme'
 import { isCompleteTank, type FluidType, type Tank } from '@/types'
 
@@ -54,9 +57,11 @@ const ORBS_CONTENT = { paddingTop: 32 }
  */
 export default function StartTab() {
   const { colors } = useTheme()
-  const { state, demoMode, primaryBattery, entityIcons } = useRenewvanBus()
+  const { state, demoMode, primaryBattery, entityIcons, settled } = useRenewvanBus()
+  const capabilities = useCapabilities()
   const commands = useCommands()
-  const { startLayout, powerLayout } = usePreferences()
+  const { homeLayout, hiddenStatusTypes, powerLayout } = usePreferences()
+  const layout = shownWidgets(homeLayout)
   const now = useNow(REFRESH_MS)
   const { batteries, solar, chargers, tanks, heaters, temperatures, tilt } = state
   const solarRecord = useFirstSolarWithHistory(solar, SOLAR_HISTORY_DAYS)
@@ -77,8 +82,16 @@ export default function StartTab() {
     )
   }
 
-  const widget = (id: StartWidgetId): ReactNode => {
+  const widget = (id: WidgetId): ReactNode => {
     switch (id) {
+      case 'status':
+        return <StatusCircles capabilities={capabilities} hidden={hiddenStatusTypes} />
+      case 'group-energy':
+      case 'group-controls':
+      case 'group-water':
+      case 'group-climate':
+      case 'group-van':
+        return <GroupCard id={id.slice(6) as GroupId} capabilities={capabilities} />
       case 'temperature':
         return <TemperaturesCard temperatures={temperatures} />
       case 'map':
@@ -142,8 +155,16 @@ export default function StartTab() {
   // bus message: the van reports several readings a second, and re-rendering all eight widgets for
   // each one kept the JS thread busy. `colors` changes with the theme.
   const heaterFrozen = demoMode || !heaterDriversOnline(state)
-  const inputsOf = (id: StartWidgetId): readonly unknown[] => {
+  const inputsOf = (id: WidgetId): readonly unknown[] => {
     switch (id) {
+      case 'status':
+        return [colors, capabilities, hiddenStatusTypes]
+      case 'group-energy':
+      case 'group-controls':
+      case 'group-water':
+      case 'group-climate':
+      case 'group-van':
+        return [colors, capabilities]
       case 'temperature':
         return [colors, temperatures]
       case 'map':
@@ -164,21 +185,38 @@ export default function StartTab() {
     }
   }
 
+  // Nothing at all on the settled bus: the map and a line, whatever the layout says about circles.
+  const emptyVan = settled && Object.values(capabilities).every((c) => c.state === 'absent')
+  const visible = emptyVan ? layout.filter((id) => id === 'map') : layout
+
   return (
     <Screen>
-      {startLayout.length === 0 ? (
+      {layout.length === 0 ? (
         <>
           <EmptyState
             icon={<LayoutGrid size={20} color={colors.muted} />}
-            title="No widgets on the Start tab."
+            title="No widgets on Home."
             detail="Choose what to show here in Settings."
           />
           <NativeButton label="Choose widgets" onPress={() => openSettings('widgets')} />
         </>
       ) : (
-        startLayout.map((id) => (
-          <WidgetSlot key={id} inputs={inputsOf(id)} render={() => widget(id)} />
-        ))
+        <>
+          {visible.map((id) => {
+            // Availability is derived here, never stored in the layout.
+            const availability = widgetAvailability(id, capabilities)
+            if (availability === 'unavailable') return null
+            if (availability === 'loading') return <Skeleton key={id} />
+            return <WidgetSlot key={id} inputs={inputsOf(id)} render={() => widget(id)} />
+          })}
+          {emptyVan ? (
+            <EmptyState
+              icon={<LayoutGrid size={20} color={colors.muted} />}
+              title="No devices on this van yet."
+              detail="Install a driver on the hub and its widgets appear here."
+            />
+          ) : null}
+        </>
       )}
     </Screen>
   )

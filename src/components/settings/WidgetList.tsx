@@ -11,12 +11,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { NativeSwitch } from '@/components/native'
-import {
-  START_WIDGET_LABELS,
-  layoutAfterDrop,
-  widgetSlots,
-  type StartWidgetId,
-} from '@/preferences/preferences'
+import { WIDGET_LABELS, layoutAfterDrop, widgetSlots } from '@/preferences/preferences'
+import type { WidgetId } from '@/lib/widgets'
 import { radius, useTheme } from '@/theme'
 
 // The Start tab's widgets as one list: the shown ones in order, a divider, then the hidden ones.
@@ -59,8 +55,8 @@ export function WidgetList({
   layout,
   onChange,
 }: {
-  layout: readonly StartWidgetId[]
-  onChange: (layout: readonly StartWidgetId[]) => void
+  layout: readonly WidgetId[]
+  onChange: (layout: readonly WidgetId[]) => void
 }) {
   const { colors } = useTheme()
   const slots = widgetSlots(layout)
@@ -121,7 +117,7 @@ export function WidgetList({
             // Only a grip that was lifted (`onStart` ran) has anything to drop.
             if (from.value === index) scheduleOnRN(drop, index, to.value)
           })
-        const label = START_WIDGET_LABELS[id]
+        const label = WIDGET_LABELS[id]
         // Without dragging: the screen reader moves a shown widget a place at a time.
         const step = (delta: number) => onChange(layoutAfterDrop(layout, index, index + delta))
         return (
