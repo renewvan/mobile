@@ -28,6 +28,20 @@ Source: `victronenergy/gui-v2` (`pages/MainView.qml`, `PageManager.qml`, `Levels
 
 Not fetched (no usable first-party text from a plain request): Home Assistant companion app navigation details (the docs only confirm dashboards with Views/Sections and a Sidebar), Apple Home, Google Home, Tesla, Truma, Garmin. They are left out rather than described from memory.
 
+## 2b. Home Assistant (the largest open home-automation app)
+
+Sources: <https://www.home-assistant.io/blog/2024/03/04/dashboard-chapter-1/>, <https://www.home-assistant.io/dashboards/sections/>, and the frontend source `home-assistant/frontend`, `src/panels/lovelace/strategies/home/` (`home-dashboard-strategy.ts` and its view strategies), read from the dev branch.
+
+- The new default **"Home" dashboard is generated from what exists, not authored**: views are `overview`, **one view per Area** (`hass.areas.map(...)`, each a `home-area` strategy), `media-players`, and `other-devices`. A user adds a device or an area and the dashboard changes with no app or frontend release.
+- It is organised by **place** (Areas the user defines), with a **catch-all "Other devices"** view for anything that fits no section. That is the same job as this map's decision to list unsupported drivers instead of hiding them.
+- Stated design goals (2024.3 "Project Grace" post): a default dashboard that is "more useful, user-friendly, and relevant right out of the box", "predictable and memorable" (the reason the Z-grid auto-layout was chosen), organised in Sections on a grid, and responsive.
+- Navigation chrome: the dashboards page documents Views, Sections and a **Sidebar** (not a bottom tab bar); the companion app wraps that web UI. I could not verify the exact mobile navigation of the companion apps from first-party text, so nothing more is claimed.
+- Takeaway for this app: the proven way to stay release-free is **structure derived from data** (areas/instances) over a **fixed vocabulary of cards/pages per entity type**, with an explicit fallback bucket. The van has no Areas today; the nearest existing shared grouping is relay groups (a hub setting).
+
+## 2c. What could not be researched
+
+Apple Home, Google Home, SmartThings, Tesla, Truma, Garmin: the first-party support pages are app-gated, script-rendered or blocked to plain requests (403 / 404 / empty), and a search engine was unavailable. They are **not** covered and nothing here is said about them from memory. Screenshots or the specific apps the owner likes would be a better source than guessing.
+
 ## 3. What this app does today (internal audit)
 
 From `src/app/(tabs)/*`, `src/components/*`, `src/components/settings/*`:
@@ -73,3 +87,4 @@ Points that make E hold together here:
 3. Does the heater (monitoring + commands) live under Controls, or keep a page of its own?
 4. Is a tab per section with its own empty state acceptable where nothing of that kind is installed (HIG), instead of hiding it?
 5. Where does Settings live: tab or header button (today)?
+6. Should structure be organised by **device type** (today), by **purpose** (monitor / control / locate / alerts), or by **place** (Home Assistant's Areas; relay groups are the only equivalent today)?
