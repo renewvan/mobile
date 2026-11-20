@@ -29,7 +29,7 @@ export function TanksContent() {
       <EmptyState
         icon={<Droplet size={20} color={colors.muted} />}
         title="No tank data yet."
-        detail="Waiting for readings from the renewvan hub."
+        detail="Waiting for readings from the Renewvan hub."
       />
     )
   }

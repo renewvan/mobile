@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "renewvan",
+    "name": "Renewvan",
     "slug": "renewvan",
     "scheme": "renewvan",
     "version": "0.1.0",
@@ -51,7 +51,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "renewvan shows where this phone is on the map when the van has no GPS. The position stays on the phone."
+          "locationWhenInUsePermission": "Renewvan shows where this phone is on the map when the van has no GPS. The position stays on the phone."
         }
       ]
     ],

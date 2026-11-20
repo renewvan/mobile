@@ -83,3 +83,5 @@ Docs: https://docs.expo.dev/eas/index.md
   hub's origin. Never send that cookie to another host.
 - A new Settings screen is a name in `src/components/settings/routes.ts`, a title and a case in
   `SettingsViewScreen.tsx`, and a view built from `kit.tsx`.
+
+- Write the product name "Renewvan" in prose and UI text, never "renewvan" or "RenewVan"; lowercase `renewvan` stays only in identifiers (topics, URLs, bucket, host, bundle IDs). See "Brand spelling" in `hub/CONTEXT.md`.
