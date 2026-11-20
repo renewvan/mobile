@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar'
 import { Check, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react-native'
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { NativeButton, NativeSwitch, NativeTextField, Segmented } from '@/components/native'
@@ -33,7 +32,6 @@ export function SettingsScreen({
   banner?: boolean
 }) {
   const { colors } = useTheme()
-  const insets = useSafeAreaInsets()
   const { status } = useRenewvanBus()
   if (!scroll) return <OverlayScreen title={title}>{children}</OverlayScreen>
   return (
@@ -50,7 +48,7 @@ export function SettingsScreen({
       />
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[styles.screen, { paddingBottom: insets.bottom + layout.gutter }]}
+        contentContainerStyle={[styles.screen, { paddingBottom: layout.gutter + 30 }]}
       >
         {banner && status === 'disconnected' ? (
           <Banner tone="danger">Not connected to the van. Changes will not be sent.</Banner>

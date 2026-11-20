@@ -1,5 +1,5 @@
 import { router } from 'expo-router'
-import { SymbolView } from 'expo-symbols'
+import { Bell } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
@@ -10,8 +10,8 @@ import { LogoLockup } from './Logo'
 
 /**
  * The options that give the tabs the platform's own header, as the dashboard's: the renewvan lockup
- * on the left, and on the right the DEMO badge while the shared Demo mode is on and the way into
- * Settings. One header for all tabs, so it stays put while the tabs switch under it.
+ * on the left, and on the right the DEMO badge while the shared Demo mode is on and the Alerts
+ * bell. Worn by the first page of each tab.
  */
 export function useAppHeaderOptions() {
   const { colors } = useTheme()
@@ -25,13 +25,13 @@ export function useAppHeaderOptions() {
   }
 }
 
-/** The Settings button carries a dot while an alert is open or the van is out of reach. */
+/** The Alerts bell carries a red dot while an alert is open. */
 function HeaderActions() {
   const { colors } = useTheme()
-  const { status, demoMode } = useRenewvanBus()
+  const { demoMode } = useRenewvanBus()
   const commands = useCommands()
   const { openCount } = useAlerts()
-  const attention = openCount > 0 || status === 'disconnected'
+  const attention = openCount > 0
 
   return (
     <View style={styles.right}>
@@ -55,17 +55,13 @@ function HeaderActions() {
       ) : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={attention ? 'Settings, needs attention' : 'Settings'}
+        accessibilityLabel={attention ? 'Alerts, open alerts' : 'Alerts'}
         android_ripple={{ color: colors.default }}
         hitSlop={8}
-        onPress={() => router.push('/settings')}
+        onPress={() => router.push('/alerts')}
         style={styles.menu}
       >
-        <SymbolView
-          name={{ ios: 'slider.horizontal.3', android: 'tune', web: 'tune' }}
-          size={22}
-          tintColor={colors.foreground}
-        />
+        <Bell size={22} color={colors.foreground} />
         {attention ? <View style={[styles.dot, { backgroundColor: colors.danger }]} /> : null}
       </Pressable>
     </View>

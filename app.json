@@ -7,6 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.renewvan.mobile"
@@ -45,7 +46,14 @@
         }
       ],
       "./plugins/withHubNetworkSecurity",
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      "expo-updates",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "renewvan shows where this phone is on the map when the van has no GPS. The position stays on the phone."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -56,6 +64,12 @@
         "projectId": "0e5ecf47-d537-4b8e-a629-7e91d7d8f4fa"
       }
     },
-    "owner": "renewvan"
+    "owner": "renewvan",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0e5ecf47-d537-4b8e-a629-7e91d7d8f4fa"
+    }
   }
 }

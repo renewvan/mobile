@@ -1,4 +1,5 @@
 import Constants from 'expo-constants'
+import * as Updates from 'expo-updates'
 import { router } from 'expo-router'
 import { Check } from 'lucide-react-native'
 import { useState } from 'react'
@@ -542,14 +543,54 @@ export function FirmwareView() {
 }
 
 export function AboutView() {
+  const { currentlyRunning, isUpdateAvailable, isUpdatePending, isChecking, isDownloading } =
+    Updates.useUpdates()
+  const [message, setMessage] = useState<string | null>(null)
+  const busy = isChecking || isDownloading
+  const check = async () => {
+    setMessage(null)
+    try {
+      const result = await Updates.checkForUpdateAsync()
+      if (result.isAvailable) await Updates.fetchUpdateAsync()
+      else setMessage('You are on the latest update.')
+    } catch {
+      setMessage('Could not check for updates.')
+    }
+  }
+  const updateId = currentlyRunning.updateId
   return (
     <>
       <DetailList>
         <DetailRow label="App" value="renewvan" />
         <DetailRow label="Version" value={Constants.expoConfig?.version ?? null} />
+        <DetailRow
+          label="Update"
+          value={
+            updateId ? updateId.slice(0, 8) : currentlyRunning.isEmbeddedLaunch ? 'Built in' : null
+          }
+        />
         <DetailRow label="Licence" value="MIT" />
         <DetailRow label="Source" value="github.com/renewvan/mobile" />
       </DetailList>
+      {Updates.isEnabled ? (
+        <Box padded>
+          {isUpdatePending ? (
+            <NativeButton label="Restart to apply" onPress={() => void Updates.reloadAsync()} />
+          ) : (
+            <NativeButton
+              label={busy ? 'Checking…' : 'Check for updates'}
+              disabled={busy}
+              variant="outlined"
+              onPress={() => void check()}
+            />
+          )}
+        </Box>
+      ) : null}
+      {isUpdatePending ? (
+        <Note>An update is ready. Restart the app to apply it.</Note>
+      ) : message || isUpdateAvailable ? (
+        <Note>{message ?? 'An update is available.'}</Note>
+      ) : null}
       <Note>
         The phone companion to the renewvan dashboard. It reads the same bus, shows the same van and
         sends the same commands; what a reading means is decided by the dashboard&apos;s own logic.
