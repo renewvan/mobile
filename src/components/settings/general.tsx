@@ -15,7 +15,6 @@ import { classifyHost, hubRouteText } from '@/lib/hubAddress'
 import {
   addedRelayGroup,
   canAddRelayGroup,
-  ownGroups,
   relayGroupNameProblem,
   renamedRelayGroups,
   reorderedRelayGroups,
@@ -27,6 +26,8 @@ import {
 import { reorderedRelayOrder } from '@/lib/relayOrder'
 import { sensorLabel, sortedSensorIds } from '@/lib/temperature'
 import { usePreferences } from '@/preferences/PreferencesProvider'
+import { useCapabilities } from '@/hooks/useCapabilities'
+import { widgetAvailability } from '@/lib/widgets'
 import {
   DEFAULT_HOME_LAYOUT,
   POWER_LAYOUTS,
@@ -37,7 +38,7 @@ import {
   VAN_COLOR_PRESETS,
   VAN_FIELDS,
   VAN_LABELS,
-  homeLayoutOf,
+  homeLayoutWithAvailable,
   isDefaultLayout,
   shownWidgets,
   type ThemeChoice,
@@ -62,8 +63,7 @@ import {
 import { openSettings } from './routes'
 import { useSettingsData } from './useSettingsData'
 
-// Settings › General and what hangs off it: the app's own appearance and widgets, the pages'
-// options, the kiosk's screen, the van's details, and this phone's connection.
+// Settings › General and the section, kiosk, van and phone screens that share these building blocks.
 
 export function GeneralView() {
   const { demoMode, commands } = useSettingsData()
@@ -72,7 +72,7 @@ export function GeneralView() {
       <Group title="Preferences">
         <NavRow
           label="Display & Appearance"
-          description="Theme, widgets, pages"
+          description="Theme"
           onPress={() => openSettings('display')}
         />
       </Group>
@@ -151,60 +151,30 @@ const THEME_OPTIONS: readonly { key: ThemeChoice; label: string }[] = [
 ]
 
 export function DisplayView() {
-  const { state, groupList } = useSettingsData()
-  const { theme, homeLayout, hiddenTemperatures, powerLayout, update } = usePreferences()
-  const sensorCount = Object.keys(state.temperatures).length
-  const shown = Object.keys(state.temperatures).filter(
-    (id) => !hiddenTemperatures.includes(id),
-  ).length
-  const groupCount = ownGroups(groupList).length
+  const { theme, update } = usePreferences()
   return (
-    <>
-      <Group title="Appearance" note="The theme and the widgets are this phone's own.">
-        <Box padded>
-          <ChoiceRow
-            label="Theme"
-            options={THEME_OPTIONS}
-            value={theme}
-            onChange={(next) => update({ theme: next })}
-          />
-        </Box>
-        <NavRow
-          label="Widgets"
-          description={`${shownWidgets(homeLayout).length} of ${WIDGET_IDS.length} on Home`}
-          onPress={() => openSettings('widgets')}
+    <Group title="Appearance" note="The theme is this phone's own.">
+      <Box padded>
+        <ChoiceRow
+          label="Theme"
+          options={THEME_OPTIONS}
+          value={theme}
+          onChange={(next) => update({ theme: next })}
         />
-      </Group>
-      <Group title="Pages">
-        <NavRow
-          label="Power"
-          description={POWER_LAYOUT_LABELS[powerLayout]}
-          onPress={() => openSettings('power-page')}
-        />
-        <NavRow
-          label="Temperature"
-          description={`${shown} of ${sensorCount} sensors shown`}
-          onPress={() => openSettings('temperature-page')}
-        />
-        <NavRow
-          label="Relays"
-          description={`${groupCount} ${groupCount === 1 ? 'group' : 'groups'}`}
-          onPress={() => openSettings('relays-page')}
-        />
-      </Group>
-    </>
+      </Box>
+    </Group>
   )
 }
 
 const POWER_LAYOUT_OPTIONS = POWER_LAYOUTS.map((key) => ({ key, label: POWER_LAYOUT_LABELS[key] }))
 
-/** How the power-flow diagram is drawn on the Power tab and in the Start tab's Power flow widget. */
+/** How the power-flow diagram is drawn on the Energy tab and in Home's Power flow widget. */
 export function PowerPageView() {
   const { powerLayout, update } = usePreferences()
   return (
     <Group
       title="Layout"
-      note="This phone's own choice. The Start tab's Power flow widget draws the same layout."
+      note="This phone's own choice. Home's Power flow widget draws the same layout."
     >
       <Box padded>
         <ChoiceRow
@@ -222,15 +192,26 @@ export function PowerPageView() {
 /** Home's widgets: shown or hidden, and in what order, by dragging or by the switch; then its status circles. */
 export function WidgetsView() {
   const { homeLayout, hiddenStatusTypes, update } = usePreferences()
-  const shown = shownWidgets(homeLayout)
-  const set = (next: typeof shown) => update({ homeLayout: homeLayoutOf(next) })
+  const capabilities = useCapabilities()
+  // Loading widgets stay listed; only those the van has no device for are left out.
+  const listed = WIDGET_IDS.filter((id) => widgetAvailability(id, capabilities) !== 'unavailable')
+  const shown = shownWidgets(homeLayout).filter((id) => listed.includes(id))
+  const unavailable = WIDGET_IDS.length - listed.length
+  const set = (next: readonly (typeof shown)[number][]) =>
+    update({ homeLayout: homeLayoutWithAvailable(homeLayout, listed, next) })
   return (
     <>
       <Note>
         Choose what Home shows. Hold a grip and drag to reorder; drop a widget above the line to
         show it, below to hide it. A widget the van has no device for stays out of sight.
       </Note>
-      <WidgetList layout={shown} onChange={set} />
+      <WidgetList layout={shown} widgets={listed} onChange={set} />
+      {unavailable > 0 && (
+        <Note>
+          {unavailable === 1 ? '1 more widget appears' : `${unavailable} more widgets appear`} when
+          their devices are installed
+        </Note>
+      )}
       <Group
         title="Status circles"
         note="The row at the top of Home, one circle per kind of device."
@@ -260,7 +241,7 @@ export function WidgetsView() {
   )
 }
 
-/** Which temperature sensors get a card on the Climate tab. */
+/** Which temperature sensors get a card on Levels › Temperature. */
 export function TemperaturePageView() {
   const { state } = useSettingsData()
   const { hiddenTemperatures: hidden, update } = usePreferences()
@@ -272,7 +253,7 @@ export function TemperaturePageView() {
   return (
     <Group
       title="Sensors"
-      note="A sensor you hide is still read and logged; it just does not get a card on the Climate tab of this phone."
+      note="A sensor you hide is still read and logged; it just does not get a card on Levels › Temperature on this phone."
     >
       {ids.length === 0 ? (
         <Empty>No temperature sensors found.</Empty>
@@ -285,7 +266,7 @@ export function TemperaturePageView() {
               <SwitchRow
                 key={id}
                 label={sensor ? sensorLabel(id, sensor) : id}
-                description={shown ? 'Shown on the Climate tab' : 'Hidden'}
+                description={shown ? 'Shown on Levels › Temperature' : 'Hidden'}
                 value={shown}
                 onChange={(next) => setShown(id, next)}
               />
@@ -299,7 +280,7 @@ export function TemperaturePageView() {
 
 const relayCount = (n: number) => (n === 1 ? '1 relay' : `${n} relays`)
 
-/** The groups of the Relays tab: their order, and adding one. Shared with the dashboard. */
+/** The groups of the Controls tab: their order, and adding one. Shared with the dashboard. */
 export function RelaysPageView() {
   const { state, relayGroups, groupList: list, relayOrder, commands, demoMode } = useSettingsData()
   const [draft, setDraft] = useState('')
@@ -325,7 +306,7 @@ export function RelaysPageView() {
   return (
     <>
       <Note>
-        The groups of the Relays page, in the order it shows them, Unassigned included. They are
+        The groups of the Controls page, in the order it shows them, Unassigned included. They are
         shared: the dashboard and every phone show the same groups.
       </Note>
       <Group

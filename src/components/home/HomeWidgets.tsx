@@ -26,7 +26,8 @@ const LABELS = Object.fromEntries(ENTITY_TYPES.map((e) => [e.type, e.label])) as
 >
 
 /** Opens a circle's destination. `at` changes on every tap so Levels can be asked for the same page twice. */
-function open(type: CircleType) {
+function open(type: CircleType, present: boolean) {
+  if (!present) return
   const d = destinationOf(type)
   if ('settings' in d) openSettings(d.settings)
   else if ('page' in d) {
@@ -36,8 +37,8 @@ function open(type: CircleType) {
 
 /**
  * One flat, scrolling row in group order: a circle per entity type with its reading and name,
- * dimmed with a dash when the van has none (or its driver is offline). Position is not here: the
- * map widget covers it.
+ * dimmed with a dash when the van has none, or 'Offline' when its driver is offline. Position is
+ * not here: the map widget covers it.
  */
 export function StatusCircles({
   capabilities,
@@ -64,13 +65,13 @@ export function StatusCircles({
         const { state: presence, offline } = capabilities[type]
         const Icon = TYPE_ICONS[type]
         const present = presence === 'present'
-        const value = present ? values[type] : '–'
+        const value = !present ? '–' : offline ? 'Offline' : values[type]
         return (
           <Pressable
             key={type}
             accessibilityRole="button"
-            accessibilityLabel={`${LABELS[type]}: ${present ? `${value}${offline ? ', offline' : ''}` : 'not installed'}`}
-            onPress={() => open(type)}
+            accessibilityLabel={`${LABELS[type]}: ${present ? value : 'not installed'}`}
+            onPress={() => open(type, present)}
             style={[styles.col, { opacity: present && !offline ? 1 : present ? 0.55 : 0.4 }]}
           >
             <View
@@ -242,6 +243,9 @@ export function GroupCard({
                   </Text>
                 ) : null}
                 {battery ? <BatteryDetail battery={battery} /> : null}
+                {offline ? (
+                  <Text style={{ color: colors.muted, fontSize: 12 }}>Offline</Text>
+                ) : null}
               </View>
             )
           })

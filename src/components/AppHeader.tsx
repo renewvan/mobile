@@ -6,12 +6,13 @@ import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { useCommands } from '@/bus/commands'
 import { confirm } from '@/components/native'
 import { radius, useTheme } from '@/theme'
+import { ConnectionButton } from './ConnectionButton'
 import { LogoLockup } from './Logo'
 
 /**
  * The options that give the tabs the platform's own header, as the dashboard's: the renewvan lockup
- * on the left, and on the right the DEMO badge while the shared Demo mode is on and the Alerts
- * bell. Worn by the first page of each tab.
+ * on the left, and on the right the DEMO badge while the shared Demo mode is on, the router's
+ * connection icon and the Alerts bell. Worn by the first page of each tab.
  */
 export function useAppHeaderOptions() {
   const { colors } = useTheme()
@@ -53,6 +54,7 @@ function HeaderActions() {
           <Text style={[styles.demoText, { color: colors.warningForeground }]}>DEMO</Text>
         </Pressable>
       ) : null}
+      <ConnectionButton />
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={attention ? 'Alerts, open alerts' : 'Alerts'}

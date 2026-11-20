@@ -1,29 +1,39 @@
 import {
   Bell,
   Car,
+  Gauge,
+  House,
   Map as MapIcon,
+  MapPin,
   Monitor,
+  Repeat2,
   Settings2,
+  SlidersHorizontal,
   Smartphone,
   Wifi,
   Workflow,
+  Zap,
 } from 'lucide-react-native'
+import { Linking } from 'react-native'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { driversSummary, unsupportedDrivers } from '@/lib/drivers'
 import { gpsSummary } from '@/lib/gps'
+import { locationPermissionLabel } from '@/location/position'
+import { usePosition } from '@/location/usePosition'
 import { routerDriver, routerName } from '@/lib/routerDriver'
 import { usePreferences } from '@/preferences/PreferencesProvider'
+import { shownWidgets } from '@/preferences/preferences'
 import { useSession } from '@/session/SessionProvider'
 import { useTheme } from '@/theme'
 import { isCompleteGps } from '@/types'
-import { Group, NavRow, SettingsScreen } from './kit'
+import { DetailList, DetailRow, Group, NavRow, SettingsScreen } from './kit'
 import { openSettings } from './routes'
 import { useSettingsData } from './useSettingsData'
 
 /**
- * Settings, the top list, as on the dashboard: Devices first, then the hub's General, Dashboard, Alerts and
- * Connectivity, the van, and (the one thing a phone adds) this phone's own connection.
+ * Settings: the account placeholder, device configuration, the sections' own choices, then the hub,
+ * advanced screens and this phone.
  */
 export function SettingsHome() {
   const { colors } = useTheme()
@@ -31,10 +41,15 @@ export function SettingsHome() {
   const { connection } = useSession()
   const { status, settled } = useRenewvanBus()
   const { openCount } = useAlerts()
-  const { alertsEnabled } = usePreferences()
+  const { alertsEnabled, homeLayout, van } = usePreferences()
+  const { status: locationStatus } = usePosition()
   const icon = { size: 22, color: colors.muted }
   return (
     <SettingsScreen title="Settings">
+      <DetailList heading="My account">
+        <DetailRow label="Van" value={connection?.target.display ?? null} />
+        <DetailRow label="Name" value={van.name || null} />
+      </DetailList>
       <NavRow
         icon={<Workflow {...icon} />}
         label="Devices"
@@ -42,11 +57,37 @@ export function SettingsHome() {
         attention={settled && unsupportedDrivers(state).length > 0}
         onPress={() => openSettings('devices')}
       />
+      <Group title="Sections">
+        <NavRow
+          icon={<House {...icon} />}
+          label="Home"
+          description={`${shownWidgets(homeLayout).length} widgets shown`}
+          onPress={() => openSettings('widgets')}
+        />
+        <NavRow
+          icon={<Zap {...icon} />}
+          label="Energy"
+          description="Power layout"
+          onPress={() => openSettings('power-page')}
+        />
+        <NavRow
+          icon={<Gauge {...icon} />}
+          label="Levels"
+          description="Temperature sensors shown"
+          onPress={() => openSettings('temperature-page')}
+        />
+        <NavRow
+          icon={<SlidersHorizontal {...icon} />}
+          label="Controls"
+          description="Relay groups"
+          onPress={() => openSettings('relays-page')}
+        />
+      </Group>
       <Group title="Hub">
         <NavRow
           icon={<Settings2 {...icon} />}
           label="General"
-          description="Display, widgets, firmware, demo mode"
+          description="Theme, firmware, demo mode"
           onPress={() => openSettings('general')}
         />
         <NavRow
@@ -88,8 +129,20 @@ export function SettingsHome() {
           description={gpsSummary(Object.values(state.gps).find(isCompleteGps))}
           onPress={() => openSettings('map')}
         />
+        <NavRow
+          icon={<Repeat2 {...icon} />}
+          label="Automation"
+          description="Not available yet"
+          onPress={() => openSettings('automation')}
+        />
       </Group>
       <Group title="This phone">
+        <NavRow
+          icon={<MapPin {...icon} />}
+          label="Location"
+          description={locationPermissionLabel(locationStatus)}
+          onPress={() => void Linking.openSettings()}
+        />
         <NavRow
           icon={<Smartphone {...icon} />}
           label="Connection"
