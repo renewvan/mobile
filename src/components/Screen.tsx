@@ -21,7 +21,7 @@ export function useScrollLock(): ScrollLock {
 
 /**
  * One tab's frame: the connection-lost note, and the page's cards stacked in a
- * scrolling column (the dashboard's phone layout). The native tab bar adds its own bottom inset.
+ * scrolling column (the dashboard's phone layout). The tab bar sits below it.
  *
  * The note matters because every bus topic is retained: without it, a dropped connection would
  * leave the last values on screen looking live.
@@ -65,13 +65,16 @@ export function Screen({ children }: { children: ReactNode }) {
   )
 }
 
+const TAB_BAR_CLEARANCE = 30
+
 const styles = StyleSheet.create({
   page: { flex: 1 },
   content: {
     flexGrow: 1,
     paddingHorizontal: layout.gutter,
     paddingTop: layout.gap,
-    paddingBottom: layout.gutter,
+    // Clears the raised Home button, which stands 30 pt above the tab bar.
+    paddingBottom: TAB_BAR_CLEARANCE,
     gap: layout.gap,
   },
 })

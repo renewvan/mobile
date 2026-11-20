@@ -18,18 +18,20 @@ design (every control has a plain React Native fallback), but iOS has not been r
 
 ## What it does
 
-Five tabs, in the platform's own tab bar (the Settings button sits in the header):
+Five tabs in one flat bar drawn by the app (`src/components/TabBar.tsx`, ADR 0004), with a raised
+Home button in the centre. The renewvan logo is on the left of each tab's header, the Alerts bell
+(red dot while an alert is open) on the right:
 
-| Tab     | Content                                                                                                                                                                                                 |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Start   | The van at a glance: outside and inside temperature, the map, the power-flow diagram, the heater dial, solar production, tilt, fresh and grey water                                                     |
-| Power   | Solar, alternator and shore charger into the battery and out to the loads, the battery's charge, state and time to go, then the solar controller's daily harvest                                        |
-| Tanks   | One card per tank: level, litres, severity badge, status, temperature and drain or fill pace                                                                                                            |
-| Climate | The heater (dial for target temperature or power level, operating modes, Start/Stop, readings), then every temperature sensor on a -20° to 50° scale                                                    |
-| Relays  | Titled panels of Off \| On controls, grouped and ordered as set in the dashboard's Settings. A critical load asks first; a command that does not take effect in 4 seconds reads "Didn't switch" + Retry |
+| Tab      | Content                                                                                                                                                                                      |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Energy   | Solar, alternator and shore charger into the battery and out to the loads, the battery's charge, state and time to go, then the solar controller's daily harvest                             |
+| Controls | The heater (dial, operating modes, Start/Stop, readings), then titled panels of Off \| On relay controls, grouped and ordered as set in the dashboard's Settings. A critical load asks first |
+| Home     | The van at a glance: temperatures, the map, the power-flow diagram, the heater dial, solar production, tilt, fresh and grey water                                                            |
+| Levels   | Sub-tabs: Tanks (level, litres, severity, drain or fill pace), Temperature (every sensor on a -20° to 50° scale) and Tilt                                                                    |
+| Settings | The Settings tree, pushed inside the tab                                                                                                                                                     |
 
-Android's tab bar holds at most five tabs, so the dashboard's Heater and Temperature pages share
-the Climate tab, and Settings opens from the gear in the header as screens stacked over the tabs.
+Each tab keeps its own stack, so its state, scroll and pushed pages survive a tab switch; tapping the
+active tab returns to its first page.
 Not in this version: the weather forecast widget on Start, the heater timer, the solar
 history charts that read InfluxDB, and the map's place name (the dashboard looks it up online;
 the app shows the coordinates).
@@ -122,8 +124,8 @@ phone"). Install that root on the phone as usual; the app is built to trust user
 
 ## Architecture
 
-- `src/app/` — Expo Router routes: `sign-in`, and the `(tabs)` group in a native tab bar
-  (`NativeTabs`). Protected routes switch between the two on the session.
+- `src/app/` — Expo Router routes: `sign-in`, and the `(tabs)` group (headless tabs
+  with the custom `TabBar`, one stack per tab). Protected routes switch between the two on the session.
 - `src/session/` — which van this phone is signed in to: address parsing (`hubAddress.ts`), the
   hub's login service (`hubClient.ts`) and the stored session (`SessionProvider.tsx`).
 - `src/bus/` — the bus adapter: one MQTT-over-WebSocket client subscribed to `renewvan/#`

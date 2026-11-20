@@ -8,7 +8,6 @@ import { View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { AlertsProvider } from '@/alerts/AlertsProvider'
 import { ConfirmHost } from '@/components/native'
-import { useAppHeaderOptions } from '@/components/AppHeader'
 import { RenewvanBusProvider } from '@/bus/RenewvanBusProvider'
 import { PreferencesProvider } from '@/preferences/PreferencesProvider'
 import { SessionProvider, useSession } from '@/session/SessionProvider'
@@ -41,7 +40,6 @@ export default function RootLayout() {
 function Root() {
   const session = useSession()
   const { colors, isDark } = useTheme()
-  const headerOptions = useAppHeaderOptions()
 
   // The window behind the screens (seen during transitions and under the keyboard).
   useEffect(() => {
@@ -65,10 +63,8 @@ function Root() {
           }}
         >
           <Stack.Protected guard={signedIn}>
-            <Stack.Screen name="(tabs)" options={headerOptions} />
+            <Stack.Screen name="(tabs)" />
             <Stack.Screen name="alerts" />
-            <Stack.Screen name="settings/index" />
-            <Stack.Screen name="settings/[view]" />
           </Stack.Protected>
           <Stack.Protected guard={!signedIn}>
             <Stack.Screen name="sign-in" options={{ animation: 'fade' }} />
