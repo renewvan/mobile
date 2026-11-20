@@ -43,8 +43,10 @@ hub's offline Protomaps basemap (`/maps/basemap.pmtiles`, built by the dashboard
 `renewvan-build-basemap` skill) in the app's theme, the van marker facing its heading and leaning
 with its pitch, and a readout of the coordinates, the fix, satellites in use, speed and heading.
 It is a widget on Start (a still card with a button to the full map) and a full page under
-Settings › This phone › Map. The map opens on the van, else on where it last was, else on
-Freiburg; it never follows the van on its own, the locate button brings it back.
+Settings › This phone › Map. With no usable van GPS, a tap can use this phone's foreground
+location instead, drawn separately as "Your phone" and never published. The map opens on the
+current position, else on Freiburg; it never follows the position on its own, the locate button
+brings it back.
 
 The basemap is behind the hub's login. MapLibre fetches with its own HTTP client, which does
 not share the app's cookie store, so the session cookie captured at sign-in is added as a

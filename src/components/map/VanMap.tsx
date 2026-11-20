@@ -1,8 +1,11 @@
 import {
   Camera,
+  GeoJSONSource,
+  Layer,
   Map as MapView,
   Marker,
   type CameraRef,
+  type CircleLayerStyle,
   type MapRef,
   type StyleSpecification,
 } from '@maplibre/maplibre-react-native'
@@ -54,6 +57,7 @@ import {
   VAN_TYRE_PATHS,
 } from '@/components/art/vanPaths'
 import { tabular } from '@/components/ui'
+import { accuracyRadius } from './accuracyRing'
 import { basemapStyle, type MapTheme } from '@/lib/mapStyle'
 import { sideViewRotation, tiltReading } from '@/lib/tilt'
 import { compassPoint, facesLeft, headingDeg } from '@/lib/vanMarker'
@@ -61,14 +65,17 @@ import { useOverlayTop } from '@/components/settings/kit'
 import { usePreferences } from '@/preferences/PreferencesProvider'
 import { useSession } from '@/session/SessionProvider'
 import { radius, useTheme } from '@/theme'
-import { hasGpsFix, isCompleteGps, type Gps } from '@/types'
-import { readLastPosition, rememberPosition, type LatLon } from './lastPosition'
+import { isCompleteGps, type Gps } from '@/types'
+import { usePosition, type PositionState } from '@/location/usePosition'
+import type { PositionSource } from '@/location/position'
 
 // The van on a map, as the dashboard's Map page draws it (dashboard `components/map/MapPage.tsx`):
 // a native MapLibre map of the same Protomaps style, read from the same offline `basemap.pmtiles`
 // the hub serves, with the van drawn at the hub's GPS fix and a fix / satellites / speed / heading
 // readout over its corner. Nothing falls back to an online map: outside the file's area, or
 // without the file, the map is the style's empty ground with the van on it.
+
+type LatLon = [latitude: number, longitude: number]
 
 /** Close enough to read streets, for a van that has a position. */
 const ZOOM = 15
@@ -262,19 +269,44 @@ function Readout({ record, heading }: { record: Gps; heading: number | null }) {
   )
 }
 
-/** Why there is no van on the map: no GPS data from the hub, or no fix yet. */
-function GpsNotice({ satellites }: { satellites: number | undefined }) {
-  const waitingForFix = satellites !== undefined
+/** With neither source, explain the fallback and put its permission flow at the point of need. */
+function PositionNotice({
+  status,
+  requestPermission,
+  record,
+}: Pick<PositionState, 'status' | 'requestPermission'> & { record: Gps | undefined }) {
+  const blocked = status?.status === 'denied' && !status.canAskAgain
+  const canRequest =
+    status !== null &&
+    (status.status === 'undetermined' || (status.status === 'denied' && status.canAskAgain))
+  // A granted phone is only waiting for its first fix; a van with a GPS record has no fix itself.
+  const finding = status?.status === 'granted'
   return (
-    <Glass status style={[styles.readout, styles.notice]}>
-      <Satellite size={16} color="#ef4444" />
+    <Glass style={[styles.readout, styles.notice]}>
+      <MapPin size={16} color={finding ? '#ffffff' : '#ef4444'} />
       <View style={styles.noticeText}>
-        <Text style={styles.place}>{waitingForFix ? 'No GPS fix yet' : 'No GPS data yet'}</Text>
-        <Text style={styles.detail}>
-          {waitingForFix
-            ? `Tracking ${satellites} satellite(s), waiting for a fix.`
-            : 'Waiting for readings from the renewvan hub.'}
+        <Text style={styles.place}>
+          {finding
+            ? "Finding this phone's position…"
+            : record
+              ? 'No GPS fix yet'
+              : 'No position. This van has no GPS, and this phone’s location is off.'}
         </Text>
+        {!finding && record && (
+          <Text style={styles.detail}>
+            Tracking {record.satellites_in_use} satellite(s), waiting for a fix.
+          </Text>
+        )}
+        {blocked && <Text style={styles.detail}>Location is off for this app</Text>}
+        {blocked ? (
+          <Button size="sm" onPress={() => void Linking.openSettings()}>
+            Open settings
+          </Button>
+        ) : canRequest ? (
+          <Button size="sm" onPress={() => void requestPermission().catch(() => {})}>
+            Use this phone&apos;s location
+          </Button>
+        ) : null}
       </View>
     </Glass>
   )
@@ -305,9 +337,11 @@ export function VanMap(props: VanMapProps) {
   // message, cost the Start tab more than any other widget.
   const shownPitch = pitch === null ? null : Math.round(pitch * 2) / 2
   const { van } = usePreferences()
+  const position = usePosition()
   return (
     <VanMapView
       {...props}
+      {...position}
       record={id ? state.gps[id] : undefined}
       pitch={shownPitch}
       vanColor={van.color}
@@ -321,7 +355,12 @@ const VanMapView = memo(function VanMapView({
   record,
   pitch,
   vanColor,
-}: VanMapProps & { record: Gps | undefined; pitch: number | null; vanColor: string }) {
+  position,
+  source,
+  status,
+  requestPermission,
+}: VanMapProps &
+  PositionState & { record: Gps | undefined; pitch: number | null; vanColor: string }) {
   const { connection } = useSession()
   const { isDark } = useTheme()
   const isCard = variant === 'card'
@@ -334,10 +373,10 @@ const VanMapView = memo(function VanMapView({
   const mapRef = useRef<MapRef>(null)
   const cameraRef = useRef<CameraRef>(null)
 
-  const fixed = record !== undefined && hasGpsFix(record)
-  const latitude = fixed ? record.latitude : undefined
-  const longitude = fixed ? record.longitude : undefined
-  const heading = record ? headingDeg(record.course_deg, record.speed_kmh) : null
+  const latitude = position?.latitude
+  const longitude = position?.longitude
+  const heading =
+    source === 'van' && record ? headingDeg(record.course_deg, record.speed_kmh) : null
 
   // The basemap is the hub's own (`/maps/` beside the dashboard), behind the same login.
   const origin = connection?.target.kind === 'hub' ? connection.target.origin : null
@@ -349,39 +388,17 @@ const VanMapView = memo(function VanMapView({
     [origin, theme],
   )
 
-  // Where the map opens: the van, else where it last was, else the default. Decided once; the map
-  // is a live view, not a navigator, so the van moves on a still map.
-  const [opening, setOpening] = useState<LatLon | null>(() =>
-    latitude !== undefined && longitude !== undefined ? [latitude, longitude] : null,
+  // Where the map opens: the current source, else the hub default. Decided once; later movement
+  // leaves the map still, while the first position to arrive centres it once.
+  const [opening] = useState<LatLon>(() =>
+    latitude !== undefined && longitude !== undefined ? [latitude, longitude] : DEFAULT_CENTRE,
   )
-  const openedWithFix = useRef(opening !== null)
+  const openedWithPosition = useRef(position !== null)
   useEffect(() => {
-    if (openedWithFix.current) return
-    let live = true
-    void readLastPosition().then((last) => {
-      if (live) setOpening((current) => current ?? last ?? DEFAULT_CENTRE)
-    })
-    return () => {
-      live = false
-    }
-  }, [])
-
-  // Remember the position per ~110 m cell, not per fix: a parked receiver wanders by metres.
-  const cell =
-    latitude === undefined || longitude === undefined
-      ? null
-      : `${latitude.toFixed(3)},${longitude.toFixed(3)}`
-  useEffect(() => {
-    if (cell === null || latitude === undefined || longitude === undefined) return
-    rememberPosition([latitude, longitude])
-    // The first fix on a map that opened without one brings the map to the van, once.
-    if (!openedWithFix.current && opening !== null) {
-      openedWithFix.current = true
-      cameraRef.current?.easeTo({ center: [longitude, latitude], zoom: ZOOM, duration: 600 })
-    }
-    // Only the cell and the map being open decide; the exact coordinates jitter.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cell, opening === null])
+    if (openedWithPosition.current || latitude === undefined || longitude === undefined) return
+    openedWithPosition.current = true
+    cameraRef.current?.easeTo({ center: [longitude, latitude], zoom: ZOOM, duration: 600 })
+  }, [latitude, longitude])
 
   const [failed, setFailed] = useState(false)
   const [creditsOpen, setCreditsOpen] = useState(false)
@@ -393,21 +410,21 @@ const VanMapView = memo(function VanMapView({
 
   return (
     <View style={[styles.map, isCard && styles.card]}>
-      {opening !== null && (
-        <MapCanvas
-          mapRef={mapRef}
-          cameraRef={cameraRef}
-          opening={opening}
-          mapStyle={style}
-          isCard={isCard}
-          onFailed={setFailed}
-          latitude={latitude}
-          longitude={longitude}
-          heading={heading}
-          pitch={pitch}
-          vanColor={vanColor}
-        />
-      )}
+      <MapCanvas
+        mapRef={mapRef}
+        cameraRef={cameraRef}
+        opening={opening}
+        mapStyle={style}
+        isCard={isCard}
+        onFailed={setFailed}
+        latitude={latitude}
+        longitude={longitude}
+        accuracy={position?.accuracy ?? null}
+        source={source}
+        heading={heading}
+        pitch={pitch}
+        vanColor={vanColor}
+      />
 
       {origin === null ? (
         <Glass status style={[styles.topNotice, styles.notice, { top: 12 + topInset }]}>
@@ -436,7 +453,7 @@ const VanMapView = memo(function VanMapView({
       <View style={[styles.topLeft, { top: 12 + topInset }]}>
         <MapButton
           icon={LocateFixed}
-          label="Centre on van"
+          label={source === 'phone' ? 'Centre on your phone' : 'Centre on van'}
           disabled={latitude === undefined || longitude === undefined}
           onPress={() => {
             if (latitude === undefined || longitude === undefined) return
@@ -490,11 +507,11 @@ const VanMapView = memo(function VanMapView({
       </Dialog>
 
       <View style={[styles.bottom, { bottom: 10 + bottomInset }]} pointerEvents="box-none">
-        {record && fixed ? (
+        {record && source === 'van' ? (
           <Readout record={record} heading={heading} />
-        ) : (
-          <GpsNotice satellites={record?.satellites_in_use} />
-        )}
+        ) : source === 'none' ? (
+          <PositionNotice status={status} requestPermission={requestPermission} record={record} />
+        ) : null}
       </View>
     </View>
   )
@@ -513,6 +530,8 @@ const MapCanvas = memo(function MapCanvas({
   onFailed,
   latitude,
   longitude,
+  accuracy,
+  source,
   heading,
   pitch,
   vanColor,
@@ -525,10 +544,22 @@ const MapCanvas = memo(function MapCanvas({
   onFailed: (failed: boolean) => void
   latitude: number | undefined
   longitude: number | undefined
+  accuracy: number | null
+  source: PositionSource
   heading: number | null
   pitch: number | null
   vanColor: string
 }) {
+  const accuracyStyle: CircleLayerStyle = {
+    // MapLibre circles are screen pixels: the radius is interpolated over zoom to stay in metres.
+    circleRadius:
+      accuracy === null || latitude === undefined ? 0 : accuracyRadius(accuracy, latitude),
+    circleColor: '#0485f7',
+    circleOpacity: 0.15,
+    circleStrokeColor: '#0485f7',
+    circleStrokeOpacity: 0.6,
+    circleStrokeWidth: 1,
+  }
   return (
     <MapView
       ref={mapRef}
@@ -549,11 +580,33 @@ const MapCanvas = memo(function MapCanvas({
       onDidFinishLoadingStyle={() => onFailed(false)}
     >
       <Camera ref={cameraRef} initialViewState={{ center: [opening[1], opening[0]], zoom: ZOOM }} />
-      {latitude !== undefined && longitude !== undefined && (
+      {source === 'van' && latitude !== undefined && longitude !== undefined && (
         // Wheels on the ground at the position: bottom-centre.
         <Marker id="van" lngLat={[longitude, latitude]} anchor="bottom">
           <VanArt heading={heading} pitch={pitch} color={vanColor} />
         </Marker>
+      )}
+      {source === 'phone' && latitude !== undefined && longitude !== undefined && (
+        <>
+          {accuracy !== null && (
+            <GeoJSONSource
+              id="phone-accuracy"
+              data={{
+                type: 'Feature',
+                properties: {},
+                geometry: { type: 'Point', coordinates: [longitude, latitude] },
+              }}
+            >
+              <Layer id="phone-accuracy-ring" type="circle" style={accuracyStyle} />
+            </GeoJSONSource>
+          )}
+          <Marker id="phone" lngLat={[longitude, latitude]} anchor="top">
+            <View style={styles.phoneMarker}>
+              <View style={styles.phoneDot} />
+              <Text style={styles.phoneLabel}>Your phone</Text>
+            </View>
+          </Marker>
+        </>
       )}
     </MapView>
   )
@@ -604,4 +657,25 @@ const styles = StyleSheet.create({
   strong: { fontWeight: '600' },
   fix: { borderRadius: radius['2xl'], paddingHorizontal: 8, paddingVertical: 2 },
   fixText: { fontSize: 12, fontWeight: '600' },
+  // The annotation's top is the dot's top: lift it by its radius to centre the dot on the fix.
+  phoneMarker: { alignItems: 'center', transform: [{ translateY: -8 }] },
+  phoneDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#0485f7',
+    borderWidth: 3,
+    borderColor: '#ffffff',
+  },
+  phoneLabel: {
+    marginTop: 4,
+    overflow: 'hidden',
+    borderRadius: radius.xl,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '500',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
 })
