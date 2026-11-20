@@ -85,7 +85,9 @@ export default function StartTab() {
   const widget = (id: WidgetId): ReactNode => {
     switch (id) {
       case 'status':
-        return <StatusCircles capabilities={capabilities} hidden={hiddenStatusTypes} />
+        return (
+          <StatusCircles capabilities={capabilities} hidden={hiddenStatusTypes} state={state} />
+        )
       case 'group-energy':
       case 'group-controls':
       case 'group-water':
@@ -158,7 +160,7 @@ export default function StartTab() {
   const inputsOf = (id: WidgetId): readonly unknown[] => {
     switch (id) {
       case 'status':
-        return [colors, capabilities, hiddenStatusTypes]
+        return [colors, capabilities, hiddenStatusTypes, state]
       case 'group-energy':
       case 'group-controls':
       case 'group-water':

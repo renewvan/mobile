@@ -1,4 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { router } from 'expo-router'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { statusValue } from '@/components/home/statusValues'
+import type { RenewvanBusState } from '@/types'
 import { TYPE_ICONS } from '@/components/home/typeMeta'
 import { TitledCard } from '@/components/ui'
 import type { Capability } from '@/lib/capabilities'
@@ -11,40 +14,73 @@ const LABELS = Object.fromEntries(ENTITY_TYPES.map((e) => [e.type, e.label])) as
   string
 >
 
-/** One flat row, in group order: a circle per entity type, dimmed when the van has none (or its driver is offline). */
+/** The tab a type's circle opens. */
+const TAB: Record<EntityType, string> = {
+  battery: '/energy',
+  solar: '/energy',
+  charger: '/energy',
+  relay: '/controls',
+  heater: '/controls',
+  tank: '/levels',
+  temperature: '/levels',
+  tilt: '/levels',
+  router: '/settings',
+  gps: '/settings',
+}
+
+/**
+ * One flat, scrolling row in group order: a circle per entity type with its reading and name,
+ * dimmed with a dash when the van has none (or its driver is offline). Position is not here: the
+ * map widget covers it.
+ */
 export function StatusCircles({
   capabilities,
   hidden,
+  state,
 }: {
   capabilities: Record<EntityType, Capability>
   hidden: readonly EntityType[]
+  state: RenewvanBusState
 }) {
   const { colors } = useTheme()
-  const types = GROUPS.flatMap((g) => g.types).filter((t) => !hidden.includes(t))
+  const types = GROUPS.flatMap((g) => g.types).filter((t) => t !== 'gps' && !hidden.includes(t))
   return (
-    <View style={styles.circles}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.circles}
+    >
       {types.map((type) => {
-        const { state, offline } = capabilities[type]
+        const { state: presence, offline } = capabilities[type]
         const Icon = TYPE_ICONS[type]
-        const on = state === 'present' && !offline
+        const present = presence === 'present'
+        const value = present ? statusValue(type, state) : '–'
         return (
-          <View
+          <Pressable
             key={type}
-            accessible
-            accessibilityLabel={`${LABELS[type]}: ${state === 'present' ? (offline ? 'offline' : 'present') : 'none'}`}
-            style={[
-              styles.circle,
-              {
-                backgroundColor: alpha(colors.accent, 0.15),
-                opacity: on ? 1 : state === 'present' ? 0.55 : 0.3,
-              },
-            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`${LABELS[type]}: ${present ? `${value}${offline ? ', offline' : ''}` : 'not installed'}`}
+            onPress={() => router.navigate(TAB[type] as never)}
+            style={[styles.col, { opacity: present && !offline ? 1 : present ? 0.55 : 0.4 }]}
           >
-            <Icon size={18} color={on ? colors.accent : colors.muted} />
-          </View>
+            <View
+              style={[
+                styles.circle,
+                { backgroundColor: alpha(colors.accent, present ? 0.18 : 0.06) },
+              ]}
+            >
+              <Icon size={22} color={present ? colors.accent : colors.muted} />
+            </View>
+            <Text numberOfLines={1} style={{ color: colors.foreground, fontSize: 12 }}>
+              {value}
+            </Text>
+            <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 11 }}>
+              {LABELS[type]}
+            </Text>
+          </Pressable>
         )
       })}
-    </View>
+    </ScrollView>
   )
 }
 
@@ -104,11 +140,12 @@ export function Skeleton({ height = 96 }: { height?: number }) {
 }
 
 const styles = StyleSheet.create({
-  circles: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  circles: { gap: 12 },
+  col: { alignItems: 'center', gap: 4, width: 64 },
   circle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
