@@ -1,5 +1,6 @@
 // THROWAWAY (#25 spike, variant F): NativeTabs with a pre-drawn disc in the centre slot.
 import { NativeTabs } from 'expo-router/unstable-native-tabs'
+import { Platform } from 'react-native'
 import { alpha, useTheme } from '@/theme'
 
 export default function Layout() {
@@ -24,7 +25,15 @@ export default function Layout() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="home">
         {/* The disc keeps its own colours: 'original' on iOS; Android is what the spike checks. */}
-        <NativeTabs.Trigger.Icon src={require('../../../assets/spike/van-disc.png')} renderingMode="original" />
+        {/* iOS run: a coloured 40 pt disc (van-disc-40@3x.png; van-disc-56@3x.png for the larger test). */}
+        <NativeTabs.Trigger.Icon
+          src={
+            Platform.OS === 'ios'
+              ? require('../../../assets/spike/van-disc-40.png')
+              : require('../../../assets/spike/van-disc.png')
+          }
+          renderingMode="original"
+        />
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="levels">
