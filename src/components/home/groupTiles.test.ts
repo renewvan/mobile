@@ -2,7 +2,7 @@ import { emptyRenewvanBusState, type RenewvanBusState } from '@/types'
 import type { Capability } from '@/lib/capabilities'
 import { ENTITY_TYPES, type EntityType } from '@/lib/drivers'
 import type { GroupId } from '@/lib/widgets'
-import { groupTiles } from './groupTiles'
+import { groupTiles, hasReading, type RelayLayout } from './groupTiles'
 
 function fixture(
   present: readonly EntityType[],
@@ -22,9 +22,14 @@ function fixture(
   return { capabilities, state: { ...emptyRenewvanBusState, ...entities } }
 }
 
-function tiles(id: GroupId, present: readonly EntityType[], entities: Partial<RenewvanBusState>) {
+function tiles(
+  id: GroupId,
+  present: readonly EntityType[],
+  entities: Partial<RenewvanBusState>,
+  layout?: RelayLayout,
+) {
   const { capabilities, state } = fixture(present, entities)
-  return groupTiles(id, capabilities, state)
+  return groupTiles(id, capabilities, state, layout)
 }
 
 describe('groupTiles', () => {
@@ -63,5 +68,32 @@ describe('groupTiles', () => {
     expect(tiles('water', ['tank'], {})).toEqual([
       { key: 'tank', type: 'tank', label: 'Tanks', wide: false },
     ])
+  })
+
+  it('orders relays like the Controls tab, whatever order the bus lists them in', () => {
+    const relays = {
+      relay_10: { state: false },
+      relay_2: { state: false },
+      relay_1: { state: true },
+    }
+    const ids = (layout?: RelayLayout) =>
+      tiles('controls', ['relay'], { relays }, layout).map((t) => t.id)
+    expect(ids()).toEqual(['relay_1', 'relay_2', 'relay_10'])
+    expect(ids({ groups: {}, list: [], order: ['relay_2', 'relay_10'] })).toEqual([
+      'relay_2',
+      'relay_10',
+      'relay_1',
+    ])
+  })
+})
+
+describe('hasReading', () => {
+  it('is true only for types with a real big value', () => {
+    expect(
+      ['battery', 'solar', 'temperature', 'tilt', 'router'].every((t) =>
+        hasReading(t as EntityType),
+      ),
+    ).toBe(true)
+    expect(['relay', 'tank', 'gps'].some((t) => hasReading(t as EntityType))).toBe(false)
   })
 })

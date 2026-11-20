@@ -3,7 +3,12 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import type { Commands } from '@/bus/commands'
 import { openSettings } from '@/components/settings/routes'
 import { destinationOf, type CircleType } from '@/components/home/destinations'
-import { groupTiles, type GroupTile } from '@/components/home/groupTiles'
+import {
+  groupTiles,
+  hasReading,
+  type GroupTile,
+  type RelayLayout,
+} from '@/components/home/groupTiles'
 import { statusValue } from '@/components/home/statusValues'
 import { TYPE_ICONS } from '@/components/home/typeMeta'
 import { useCommandPhases } from '@/components/relays/useCommandPhases'
@@ -142,7 +147,7 @@ function RelayTiles({
           <Pressable
             key={tile.key}
             accessibilityRole="button"
-            accessibilityLabel={`${tile.label}: ${unknown ? 'Unknown' : pending ? `Switching ${shown ? 'on' : 'off'}` : shown ? 'On' : 'Off'}`}
+            accessibilityLabel={`${tile.label}: ${unknown ? 'Unknown' : pending ? `Switching ${shown ? 'on' : 'off'}` : failed ? "Didn't switch" : shown ? 'On' : 'Off'}`}
             accessibilityState={{ disabled: unknown || pending, busy: pending }}
             android_ripple={{ color: colors.default }}
             disabled={unknown || pending}
@@ -184,16 +189,18 @@ export function GroupCard({
   state,
   demoMode,
   commands,
+  relayLayout,
 }: {
   id: GroupId
   capabilities: Record<EntityType, Capability>
   state: RenewvanBusState
+  relayLayout: RelayLayout
   demoMode: boolean
   commands: Pick<Commands, 'setRelay'>
 }) {
   const { colors } = useTheme()
   const group = GROUPS.find((g) => g.id === id)!
-  const tiles = groupTiles(id, capabilities, state)
+  const tiles = groupTiles(id, capabilities, state, relayLayout)
   return (
     <TitledCard title={group.label}>
       <View style={styles.tiles}>
@@ -229,7 +236,7 @@ export function GroupCard({
                 <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: '500' }}>
                   {tile.label}
                 </Text>
-                {tile.wide ? (
+                {tile.wide && hasReading(tile.type) ? (
                   <Text style={{ color: colors.foreground, fontSize: 24, fontWeight: '600' }}>
                     {statusValue(tile.type, state)}
                   </Text>

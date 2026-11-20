@@ -30,6 +30,7 @@ import { usePreferences } from '@/preferences/PreferencesProvider'
 import { shownWidgets } from '@/preferences/preferences'
 import { useCapabilities } from '@/hooks/useCapabilities'
 import { widgetAvailability, type GroupId, type WidgetId } from '@/lib/widgets'
+import { DEFAULT_RELAY_GROUP_LIST } from '@/lib/relayGroups'
 import { GroupCard, Skeleton, StatusCircles } from '@/components/home/HomeWidgets'
 import { useTheme } from '@/theme'
 import { isCompleteTank, type FluidType, type Tank } from '@/types'
@@ -58,7 +59,16 @@ const ORBS_CONTENT = { paddingTop: 32 }
  */
 export default function StartTab() {
   const { colors } = useTheme()
-  const { state, demoMode, primaryBattery, entityIcons, settled } = useRenewvanBus()
+  const {
+    state,
+    demoMode,
+    primaryBattery,
+    entityIcons,
+    settled,
+    relayGroups,
+    relayGroupList,
+    relayOrder,
+  } = useRenewvanBus()
   const capabilities = useCapabilities()
   const commands = useCommands()
   const { homeLayout, hiddenStatusTypes, powerLayout } = usePreferences()
@@ -109,6 +119,11 @@ export default function StartTab() {
             state={state}
             demoMode={demoMode}
             commands={commands}
+            relayLayout={{
+              groups: relayGroups,
+              list: relayGroupList ?? DEFAULT_RELAY_GROUP_LIST,
+              order: relayOrder,
+            }}
           />
         )
       case 'temperature':

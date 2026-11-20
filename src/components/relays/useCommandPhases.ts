@@ -12,6 +12,18 @@ export const GIVE_UP_MS = 4000
 export type Phase =
   { kind: 'pending'; to: boolean; from: boolean | undefined } | { kind: 'failed'; to: boolean }
 
+/** The phase that still applies given the relay's real `state`, or nothing once the state has settled it. */
+export function activePhase(phase: Phase | undefined, state: boolean | undefined) {
+  if (phase?.kind === 'pending' && state !== phase.from) return undefined
+  if (phase?.kind === 'failed' && state === phase.to) return undefined
+  return phase
+}
+
+/** What a phase becomes when GIVE_UP_MS passes: a pending command fails, anything else stays. */
+export function givenUp(phase: Phase | undefined): Phase | undefined {
+  return phase?.kind === 'pending' ? { kind: 'failed', to: phase.to } : phase
+}
+
 type Timer = ReturnType<typeof setTimeout>
 
 /**
@@ -58,7 +70,7 @@ export function useCommandPhases(
     const handle = setTimeout(() => {
       timers.current.delete(id)
       setPhases((prev) =>
-        prev[id]?.kind === 'pending' ? { ...prev, [id]: { kind: 'failed', to } } : prev,
+        prev[id]?.kind === 'pending' ? { ...prev, [id]: givenUp(prev[id])! } : prev,
       )
     }, GIVE_UP_MS)
     timers.current.set(id, handle)
@@ -66,13 +78,7 @@ export function useCommandPhases(
   }
 
   /** The phase that still applies to a relay, or nothing once its state has settled it. */
-  const phaseOf = (id: string): Phase | undefined => {
-    const phase = phases[id]
-    const state = relays[id]?.state
-    if (phase?.kind === 'pending' && state !== phase.from) return undefined
-    if (phase?.kind === 'failed' && state === phase.to) return undefined
-    return phase
-  }
+  const phaseOf = (id: string) => activePhase(phases[id], relays[id]?.state)
 
   return { phaseOf, request }
 }
