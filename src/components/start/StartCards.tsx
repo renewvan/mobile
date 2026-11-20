@@ -48,7 +48,7 @@ export function TemperaturesCard({
   )
 }
 
-const VAN_H = 56
+const VAN_H = 40
 
 /**
  * The van's pitch (side view) and roll (rear view), each drawn tilted by its angle on a ground
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   temps: { flexDirection: 'row', justifyContent: 'space-around', paddingTop: 4 },
   temp: { alignItems: 'center', gap: 4 },
   tempValue: { fontSize: 32, lineHeight: 36, fontWeight: '600', ...tabular },
-  tilt: { flexDirection: 'row', gap: 16 },
+  tilt: { flexDirection: 'row', gap: 16, paddingTop: 12 },
   tiltCell: { flex: 1, alignItems: 'center', gap: 4 },
   ground: { alignSelf: 'stretch', height: 2, borderRadius: 1, marginVertical: 4 },
   angle: { fontSize: 18, fontWeight: '600', ...tabular },
