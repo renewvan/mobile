@@ -15,7 +15,7 @@ import { WIDGET_LABELS, layoutAfterDrop, widgetSlots } from '@/preferences/prefe
 import type { WidgetId } from '@/lib/widgets'
 import { radius, useTheme } from '@/theme'
 
-// The Start tab's widgets as one list: the shown ones in order, a divider, then the hidden ones.
+// Home's widgets as one list: the shown ones in order, a divider, then the hidden ones.
 // Holding a row's grip lifts it; dropping it above the divider shows it, below hides it, and the
 // switch does the same without dragging. Every slot is the same height, so where a row would land
 // is arithmetic on the finger's distance, and the rows in between slide one step out of the way.
@@ -53,13 +53,16 @@ function Slot({ index, drag, children }: { index: number; drag: Drag; children: 
 
 export function WidgetList({
   layout,
+  widgets,
   onChange,
 }: {
   layout: readonly WidgetId[]
+  /** The catalogue to offer; unavailable widgets stay out of the editor and in the saved layout. */
+  widgets: readonly WidgetId[]
   onChange: (layout: readonly WidgetId[]) => void
 }) {
   const { colors } = useTheme()
-  const slots = widgetSlots(layout)
+  const slots = widgetSlots(layout, widgets)
   const from = useSharedValue(-1)
   const to = useSharedValue(-1)
   const dy = useSharedValue(0)
@@ -75,7 +78,7 @@ export function WidgetList({
   useLayoutEffect(reset, [layout]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const drop = (index: number, target: number) => {
-    const next = layoutAfterDrop(layout, index, target)
+    const next = layoutAfterDrop(layout, index, target, widgets)
     if (next === layout) reset()
     else onChange(next)
   }
