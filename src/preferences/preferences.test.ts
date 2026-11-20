@@ -2,6 +2,7 @@ import {
   DEFAULT_PREFERENCES,
   DEFAULT_HOME_LAYOUT,
   homeLayoutOf,
+  homeLayoutWithAvailable,
   shownWidgets,
   isDefaultLayout,
   layoutAfterDrop,
@@ -107,6 +108,45 @@ describe('shownWidgets', () => {
   })
 })
 
+describe('homeLayoutWithAvailable', () => {
+  it('edits available widgets without changing unavailable ones in the saved layout', () => {
+    const saved = homeLayoutOf(['group-water', 'status', 'map', 'heater'])
+    const next = homeLayoutWithAvailable(
+      saved,
+      ['status', 'map', 'group-energy'],
+      ['map', 'group-energy', 'status'],
+    )
+    expect(shownWidgets(next)).toEqual(['map', 'heater', 'group-energy', 'group-water', 'status'])
+
+    const hiddenUnavailable = homeLayoutWithAvailable(
+      homeLayoutOf(['status']),
+      ['status', 'map'],
+      ['status'],
+    )
+    expect(shownWidgets(hiddenUnavailable)).toEqual(['status'])
+  })
+})
+
+describe('homeLayoutWithAvailable, unavailable neighbours', () => {
+  it('keeps an unavailable widget before the available one it preceded when the first is hidden', () => {
+    const next = homeLayoutWithAvailable(
+      homeLayoutOf(['status', 'group-water', 'map']),
+      ['status', 'map'],
+      ['map'],
+    )
+    expect(shownWidgets(next)).toEqual(['group-water', 'map'])
+  })
+
+  it('keeps it after the available one it trailed when that one moves', () => {
+    const next = homeLayoutWithAvailable(
+      homeLayoutOf(['status', 'map', 'group-water']),
+      ['status', 'map'],
+      ['map', 'status'],
+    )
+    expect(shownWidgets(next)).toEqual(['map', 'group-water', 'status'])
+  })
+})
+
 describe('powerLayout', () => {
   it('keeps a layout the app draws and falls back to Van tiles for any other', () => {
     const layout = (powerLayout: unknown) =>
@@ -142,6 +182,14 @@ describe('layoutAfterDrop', () => {
 
   it('hides a shown widget dropped below the divider', () => {
     expect(layoutAfterDrop(layout, 0, 3)).toEqual(['map', 'power-flow'])
+  })
+
+  it('drags within a catalogue filtered to the available widgets', () => {
+    expect(layoutAfterDrop(['status', 'map'], 3, 0, ['status', 'map', 'heater'])).toEqual([
+      'heater',
+      'status',
+      'map',
+    ])
   })
 
   it('changes nothing for the divider, a hidden widget moved among the hidden, or a drop in place', () => {

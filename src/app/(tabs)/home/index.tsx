@@ -49,9 +49,8 @@ function tankOf(tanks: Record<string, Partial<Tank>>, fluid: FluidType) {
 const ORBS_CONTENT = { paddingTop: 32 }
 
 /**
- * The Start tab: the van at a glance, one widget per reading, stacked as the dashboard stacks
- * them on a phone. Which widgets, and in what order, is this phone's own choice (Settings ›
- * General › Display & Appearance › Widgets). Each widget draws its own empty state, so a van
+ * The Home tab: the van at a glance, one widget per reading, stacked as the dashboard stacks
+ * them on a phone. Which widgets, and in what order, is this phone's own choice (Settings › Home). Each widget draws its own empty state, so a van
  * without a heater or a tilt sensor still gets a tidy page.
  *
  * Not here yet, against the dashboard: the weather forecast.
@@ -228,6 +227,12 @@ export default function StartTab() {
               detail="Install a driver on the hub and its widgets appear here."
             />
           ) : null}
+          <NativeButton
+            label="Edit"
+            accessibilityLabel="Edit Home widgets"
+            variant="outlined"
+            onPress={() => openSettings('widgets')}
+          />
         </>
       )}
     </Screen>

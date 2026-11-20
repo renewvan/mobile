@@ -21,14 +21,20 @@ const BUTTON_VARIANT = {
   text: 'ghost',
 } as const
 
-export function NativeButton({ label, onPress, disabled, variant = 'filled' }: NativeButtonProps) {
+export function NativeButton({
+  label,
+  accessibilityLabel = label,
+  onPress,
+  disabled,
+  variant = 'filled',
+}: NativeButtonProps) {
   return (
     <Button
       variant={BUTTON_VARIANT[variant]}
       size="md"
       isDisabled={disabled}
       onPress={onPress}
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel}
     >
       {label}
     </Button>
