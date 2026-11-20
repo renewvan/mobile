@@ -2,16 +2,20 @@ import {
   Bell,
   Car,
   Map as MapIcon,
+  MapPin,
   Monitor,
   Settings2,
   Smartphone,
   Wifi,
   Workflow,
 } from 'lucide-react-native'
+import { Linking } from 'react-native'
 import { useAlerts } from '@/alerts/AlertsProvider'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { driversSummary, unsupportedDrivers } from '@/lib/drivers'
 import { gpsSummary } from '@/lib/gps'
+import { locationPermissionLabel } from '@/location/position'
+import { usePosition } from '@/location/usePosition'
 import { routerDriver, routerName } from '@/lib/routerDriver'
 import { usePreferences } from '@/preferences/PreferencesProvider'
 import { useSession } from '@/session/SessionProvider'
@@ -32,6 +36,7 @@ export function SettingsHome() {
   const { status, settled } = useRenewvanBus()
   const { openCount } = useAlerts()
   const { alertsEnabled } = usePreferences()
+  const { status: locationStatus } = usePosition()
   const icon = { size: 22, color: colors.muted }
   return (
     <SettingsScreen title="Settings">
@@ -90,6 +95,12 @@ export function SettingsHome() {
         />
       </Group>
       <Group title="This phone">
+        <NavRow
+          icon={<MapPin {...icon} />}
+          label="Location"
+          description={locationPermissionLabel(locationStatus)}
+          onPress={() => void Linking.openSettings()}
+        />
         <NavRow
           icon={<Smartphone {...icon} />}
           label="Connection"
