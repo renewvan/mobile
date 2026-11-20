@@ -30,6 +30,7 @@ import { usePreferences } from '@/preferences/PreferencesProvider'
 import { shownWidgets } from '@/preferences/preferences'
 import { useCapabilities } from '@/hooks/useCapabilities'
 import { widgetAvailability, type GroupId, type WidgetId } from '@/lib/widgets'
+import { DEFAULT_RELAY_GROUP_LIST } from '@/lib/relayGroups'
 import { GroupCard, Skeleton, StatusCircles } from '@/components/home/HomeWidgets'
 import { useTheme } from '@/theme'
 import { isCompleteTank, type FluidType, type Tank } from '@/types'
@@ -57,7 +58,16 @@ const ORBS_CONTENT = { paddingTop: 32 }
  */
 export default function StartTab() {
   const { colors } = useTheme()
-  const { state, demoMode, primaryBattery, entityIcons, settled } = useRenewvanBus()
+  const {
+    state,
+    demoMode,
+    primaryBattery,
+    entityIcons,
+    settled,
+    relayGroups,
+    relayGroupList,
+    relayOrder,
+  } = useRenewvanBus()
   const capabilities = useCapabilities()
   const commands = useCommands()
   const { homeLayout, hiddenStatusTypes, powerLayout } = usePreferences()
@@ -101,7 +111,20 @@ export default function StartTab() {
       case 'group-water':
       case 'group-climate':
       case 'group-van':
-        return <GroupCard id={id.slice(6) as GroupId} capabilities={capabilities} />
+        return (
+          <GroupCard
+            id={id.slice(6) as GroupId}
+            capabilities={capabilities}
+            state={state}
+            demoMode={demoMode}
+            commands={commands}
+            relayLayout={{
+              groups: relayGroups,
+              list: relayGroupList ?? DEFAULT_RELAY_GROUP_LIST,
+              order: relayOrder,
+            }}
+          />
+        )
       case 'temperature':
         return <TemperaturesCard temperatures={temperatures} />
       case 'map':
@@ -171,11 +194,15 @@ export default function StartTab() {
         // Readings are strings: compared by value, so the circles redraw only when one changes.
         return [colors, capabilities, hiddenStatusTypes, ...Object.values(statusValues)]
       case 'group-energy':
+        return [colors, capabilities, batteries, solar, chargers]
       case 'group-controls':
+        return [colors, capabilities, state.relays, demoMode, commands]
       case 'group-water':
+        return [colors, capabilities, tanks]
       case 'group-climate':
+        return [colors, capabilities, heaters, temperatures]
       case 'group-van':
-        return [colors, capabilities]
+        return [colors, capabilities, state.gps, tilt, state.routers]
       case 'temperature':
         return [colors, temperatures]
       case 'map':
