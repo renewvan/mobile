@@ -7,8 +7,10 @@ import { chargerWatts } from '@/lib/charging'
 import {
   entityCountText,
   instanceCountText,
+  unsupportedDrivers,
   type DriverRow,
   type DriverTone,
+  type UnsupportedDriver,
   type EntityType,
 } from '@/lib/drivers'
 import {
@@ -55,6 +57,7 @@ import {
   titleCase,
 } from '@/lib/temperature'
 import { formatDeg, tiltReading } from '@/lib/tilt'
+import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { usePreferences } from '@/preferences/PreferencesProvider'
 import { radius, useTheme } from '@/theme'
 import {
@@ -113,6 +116,14 @@ const whole = (n: number) => String(Math.round(n))
 const byName = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' })
 const byNumericId = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true })
 
+const NOT_SUPPORTED = 'Not supported by this app version'
+
+function unsupportedDetail({ kind, types }: UnsupportedDriver): string {
+  return kind === 'unsupported'
+    ? `Publishes: ${types.join(', ')}. Update the app to use it.`
+    : `Some of its data isn't shown: ${types.join(', ')}.`
+}
+
 function describeDriver(row: DriverRow): string {
   return row.entityCount === null
     ? row.version
@@ -136,6 +147,8 @@ const SORT_OPTIONS = [
 export function DevicesView() {
   const { drivers, state } = useSettingsData()
   const { devicesSort, update } = usePreferences()
+  const { settled } = useRenewvanBus()
+  const unsupported = settled ? unsupportedDrivers(state) : []
 
   if (drivers.length === 0) {
     return <Empty>No drivers connected. Waiting for the renewvan hub.</Empty>
@@ -199,7 +212,11 @@ export function DevicesView() {
             <NavRow
               key={row.key}
               label={row.name}
-              description={describeDriver(row)}
+              description={
+                unsupported.some((u) => u.key === row.key)
+                  ? `${NOT_SUPPORTED}. ${describeDriver(row)}`
+                  : describeDriver(row)
+              }
               tone={TONE[row.tone]}
               dim={row.dim}
               onPress={() => openSettings('driver', row.key)}
@@ -227,7 +244,8 @@ export function DevicesView() {
 }
 
 export function DriverView({ id }: { id: string }) {
-  const { drivers, state } = useSettingsData()
+  const { drivers, state, settled } = useSettingsData()
+  const unsupported = settled ? unsupportedDrivers(state).find((u) => u.key === id) : undefined
   const row = drivers.find((driver) => driver.key === id)
   if (row === undefined) return <Empty>This driver is no longer on the bus.</Empty>
 
@@ -258,6 +276,11 @@ export function DriverView({ id }: { id: string }) {
           onPress={() => openSettings('driver-info', row.key)}
         />
       </DetailList>
+      {unsupported && (
+        <Note>
+          {NOT_SUPPORTED}. {unsupportedDetail(unsupported)}
+        </Note>
+      )}
       {row.entities.length > 0 && (
         <Group title="Publishes">
           {row.entities.map(({ type, label, ids }) => {

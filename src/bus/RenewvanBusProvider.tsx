@@ -22,6 +22,8 @@ export interface RenewvanBus extends Omit<BusData, 'real' | 'demo'> {
   /** The van on screen: the simulated one while Demo mode is on. */
   state: RenewvanBusState
   status: ConnectionStatus
+  /** True once the retained state has had time to arrive after a connect; absence means something only from then on. */
+  settled: boolean
   /** Sends a command (QoS 1, never retained). Held back while Demo mode is on. */
   publish: (topic: string, payload: string) => void
 }
@@ -37,6 +39,9 @@ const BusContext = createContext<RenewvanBus | null>(null)
  */
 const FLUSH_MS = 250
 
+/** How long the retained state is given to arrive after a connect before absence means "cleared". */
+const SETTLE_MS = 3000
+
 export function RenewvanBusProvider({
   config,
   children,
@@ -46,12 +51,22 @@ export function RenewvanBusProvider({
 }) {
   const [data, setData] = useState<BusData>(emptyBusData)
   const [status, setStatus] = useState<ConnectionStatus>('connecting')
+  const [settled, setSettled] = useState(false)
   const clientRef = useRef<MqttClient | null>(null)
   // The latest Demo mode flag, for `publish`, which must stay one stable function.
   const demoRef = useRef(false)
   useEffect(() => {
     demoRef.current = data.demoMode
   }, [data.demoMode])
+
+  useEffect(() => {
+    if (status !== 'connected') return
+    const timer = setTimeout(() => setSettled(true), SETTLE_MS)
+    return () => {
+      clearTimeout(timer)
+      setSettled(false)
+    }
+  }, [status])
 
   const url = config?.url
   const username = config?.username
@@ -118,9 +133,10 @@ export function RenewvanBusProvider({
       ...shared,
       state: visibleState(data),
       status: url ? status : 'disconnected',
+      settled,
       publish,
     }
-  }, [data, status, publish, url])
+  }, [data, status, settled, publish, url])
 
   return <BusContext.Provider value={value}>{children}</BusContext.Provider>
 }
