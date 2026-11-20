@@ -212,11 +212,8 @@ export function DevicesView() {
             <NavRow
               key={row.key}
               label={row.name}
-              description={
-                unsupported.some((u) => u.key === row.key)
-                  ? `${NOT_SUPPORTED}. ${describeDriver(row)}`
-                  : describeDriver(row)
-              }
+              description={describeDriver(row)}
+              badge={unsupported.some((u) => u.key === row.key) ? NOT_SUPPORTED : undefined}
               tone={TONE[row.tone]}
               dim={row.dim}
               onPress={() => openSettings('driver', row.key)}
@@ -338,7 +335,7 @@ export function DriverInfoView({ id }: { id: string }) {
 export function TanksView() {
   const { state } = useSettingsData()
   const ids = sortTankIds(Object.keys(state.tanks))
-  if (ids.length === 0) return <Empty>No tanks found. Waiting for driver-tank to publish.</Empty>
+  if (ids.length === 0) return <Empty>No tanks found.</Empty>
   return (
     <Group>
       {ids.map((id) => {
@@ -484,7 +481,7 @@ function lockReason(heater: Heater): string | undefined {
   if (heater.commands_enabled !== true) return 'Read-only! - Commands are turned off.'
   if (!canChangeSettings(heater)) return 'The heater is not ready for a change right now.'
   if (sensorLocked(operatingMode(heater))) {
-    return 'The heater does not accept a sensor change in this mode. Switch to Temperature mode on the Climate tab first.'
+    return 'The heater does not accept a sensor change in this mode. Switch to Levels › Temperature first.'
   }
   return undefined
 }
@@ -1074,7 +1071,7 @@ function RelayInstance({ id }: { id: string }) {
       </Group>
       <Group
         title="Group"
-        note="Which panel of the Relays tab this relay sits in. Add or rename groups under Display & Appearance › Relays."
+        note="Which panel of the Controls tab this relay sits in. Add or rename groups under Settings › Controls."
       >
         <RadioList
           label="Group"

@@ -36,6 +36,7 @@ export const SETTINGS_VIEWS = [
   'tailscale',
   'van',
   'map',
+  'automation',
   'connection',
 ] as const
 export type SettingsView = (typeof SETTINGS_VIEWS)[number]

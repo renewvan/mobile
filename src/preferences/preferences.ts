@@ -48,6 +48,26 @@ export function homeLayoutOf(shown: readonly WidgetId[]): HomeLayout {
   return { order: [...shown, ...hidden], hidden }
 }
 
+/** Applies an edit of the available widgets without changing any unavailable one's saved state. */
+export function homeLayoutWithAvailable(
+  current: HomeLayout,
+  available: readonly WidgetId[],
+  shown: readonly WidgetId[],
+): HomeLayout {
+  const before = shownWidgets(current)
+  const replacements = [...shown, ...available.filter((id) => !shown.includes(id))]
+  let index = 0
+  const order = widgetSlots(before).flatMap((id) =>
+    id === 'divider' ? [] : available.includes(id) ? [replacements[index++]] : [id],
+  )
+  return {
+    order,
+    hidden: WIDGET_IDS.filter((id) =>
+      available.includes(id) ? !shown.includes(id) : !before.includes(id),
+    ),
+  }
+}
+
 export type ThemeChoice = 'system' | 'light' | 'dark'
 export type DevicesSort = 'driver' | 'entity'
 
@@ -208,8 +228,11 @@ export function moved<T>(list: readonly T[], from: number, to: number): readonly
 }
 
 /** The Widgets screen's slots: the shown widgets in order, a divider, then the hidden ones as shipped. */
-export function widgetSlots(shown: readonly WidgetId[]): (WidgetId | 'divider')[] {
-  return [...shown, 'divider', ...WIDGET_IDS.filter((id) => !shown.includes(id))]
+export function widgetSlots(
+  shown: readonly WidgetId[],
+  widgets: readonly WidgetId[] = WIDGET_IDS,
+): (WidgetId | 'divider')[] {
+  return [...shown, 'divider', ...widgets.filter((id) => !shown.includes(id))]
 }
 
 /**
@@ -221,8 +244,9 @@ export function layoutAfterDrop(
   shown: readonly WidgetId[],
   from: number,
   to: number,
+  widgets: readonly WidgetId[] = WIDGET_IDS,
 ): readonly WidgetId[] {
-  const slots = widgetSlots(shown)
+  const slots = widgetSlots(shown, widgets)
   if (slots[from] === 'divider') return shown
   const next = moved(slots, from, to)
   const after = next.slice(0, next.indexOf('divider')) as WidgetId[]

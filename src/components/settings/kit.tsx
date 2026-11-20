@@ -7,7 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { NativeButton, NativeSwitch, NativeTextField, Segmented } from '@/components/native'
-import { Banner, tabular } from '@/components/ui'
+import { Banner, Chip, tabular } from '@/components/ui'
 import { entityIconOf } from '@/lib/entityIcons'
 import { alpha, layout, radius, useTheme, type Palette } from '@/theme'
 
@@ -179,11 +179,13 @@ export function NavRow({
   tone,
   dim,
   attention,
+  badge,
   onPress,
 }: {
   icon?: ReactNode
   label: string
   description?: string
+  badge?: string
   /** A status dot before the description: a Driver's health. */
   tone?: StatusTone
   /** Greyed: an offline Driver. */
@@ -196,7 +198,7 @@ export function NavRow({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[label, description, attention && 'needs attention']
+      accessibilityLabel={[label, description, badge, attention && 'needs attention']
         .filter(Boolean)
         .join(', ')}
       android_ripple={{ color: colors.default }}
@@ -222,6 +224,7 @@ export function NavRow({
         ) : null}
       </View>
       {attention ? <View style={[styles.dot, { backgroundColor: colors.danger }]} /> : null}
+      {badge ? <Chip label={badge} tone="warning" /> : null}
       <ChevronRight size={18} color={colors.muted} />
     </Pressable>
   )

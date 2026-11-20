@@ -60,10 +60,10 @@ const TITLES: Record<SettingsView, string> = {
   display: 'Display & Appearance',
   kiosk: 'Dashboard',
   alerts: 'Alerts',
-  widgets: 'Widgets',
-  'power-page': 'Power page',
-  'temperature-page': 'Temperature page',
-  'relays-page': 'Relays page',
+  widgets: 'Home',
+  'power-page': 'Energy',
+  'temperature-page': 'Levels',
+  'relays-page': 'Controls',
   'relay-group': 'Group',
   connectivity: 'Connectivity',
   cellular: 'Cellular',
@@ -71,6 +71,7 @@ const TITLES: Record<SettingsView, string> = {
   tailscale: 'Tailscale',
   van: 'Van',
   map: 'Map',
+  automation: 'Automation',
   connection: 'Connection',
 }
 
@@ -182,6 +183,8 @@ function content(view: SettingsView, id: string): ReactNode {
     case 'map':
       // Drawn full-bleed by the screen itself (see below), never inside the scrolling column.
       return null
+    case 'automation':
+      return <Empty>Automation is not available yet.</Empty>
     case 'connection':
       return <ConnectionView />
   }
