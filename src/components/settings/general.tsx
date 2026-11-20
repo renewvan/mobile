@@ -10,6 +10,7 @@ import { AUTO_SLEEP_TIMEOUT_CHOICES, type AutoSleepTimeoutMinutes } from '@/bus/
 import { confirm, NativeButton, NativeSlider, NativeTextField } from '@/components/native'
 import { tabular } from '@/components/ui'
 import { panelsFor } from '@/config/relayPanels'
+import { ENTITY_TYPES } from '@/lib/drivers'
 import { classifyHost, hubRouteText } from '@/lib/hubAddress'
 import {
   addedRelayGroup,
@@ -27,16 +28,18 @@ import { reorderedRelayOrder } from '@/lib/relayOrder'
 import { sensorLabel, sortedSensorIds } from '@/lib/temperature'
 import { usePreferences } from '@/preferences/PreferencesProvider'
 import {
-  DEFAULT_START_LAYOUT,
+  DEFAULT_HOME_LAYOUT,
   POWER_LAYOUTS,
   POWER_LAYOUT_HINTS,
   POWER_LAYOUT_LABELS,
-  START_WIDGET_IDS,
+  WIDGET_IDS,
   HEX_COLOR,
   VAN_COLOR_PRESETS,
   VAN_FIELDS,
   VAN_LABELS,
+  homeLayoutOf,
   isDefaultLayout,
+  shownWidgets,
   type ThemeChoice,
 } from '@/preferences/preferences'
 import { useSession } from '@/session/SessionProvider'
@@ -149,7 +152,7 @@ const THEME_OPTIONS: readonly { key: ThemeChoice; label: string }[] = [
 
 export function DisplayView() {
   const { state, groupList } = useSettingsData()
-  const { theme, startLayout, hiddenTemperatures, powerLayout, update } = usePreferences()
+  const { theme, homeLayout, hiddenTemperatures, powerLayout, update } = usePreferences()
   const sensorCount = Object.keys(state.temperatures).length
   const shown = Object.keys(state.temperatures).filter(
     (id) => !hiddenTemperatures.includes(id),
@@ -168,7 +171,7 @@ export function DisplayView() {
         </Box>
         <NavRow
           label="Widgets"
-          description={`${startLayout.length} of ${START_WIDGET_IDS.length} on the Start tab`}
+          description={`${shownWidgets(homeLayout).length} of ${WIDGET_IDS.length} on Home`}
           onPress={() => openSettings('widgets')}
         />
       </Group>
@@ -216,22 +219,42 @@ export function PowerPageView() {
   )
 }
 
-/** The Start tab's widgets: shown or hidden, and in what order, by dragging or by the switch. */
+/** Home's widgets: shown or hidden, and in what order, by dragging or by the switch; then its status circles. */
 export function WidgetsView() {
-  const { startLayout: layout, update } = usePreferences()
-  const set = (next: typeof layout) => update({ startLayout: next })
+  const { homeLayout, hiddenStatusTypes, update } = usePreferences()
+  const shown = shownWidgets(homeLayout)
+  const set = (next: typeof shown) => update({ homeLayout: homeLayoutOf(next) })
   return (
     <>
       <Note>
-        Choose what the Start tab shows. Hold a grip and drag to reorder; drop a widget above the
-        line to show it, below to hide it.
+        Choose what Home shows. Hold a grip and drag to reorder; drop a widget above the line to
+        show it, below to hide it. A widget the van has no device for stays out of sight.
       </Note>
-      <WidgetList layout={layout} onChange={set} />
+      <WidgetList layout={shown} onChange={set} />
+      <Group
+        title="Status circles"
+        note="The row at the top of Home, one circle per kind of device."
+      >
+        {ENTITY_TYPES.map(({ type, label }) => (
+          <SwitchRow
+            key={type}
+            label={label}
+            value={!hiddenStatusTypes.includes(type)}
+            onChange={(on) =>
+              update({
+                hiddenStatusTypes: on
+                  ? hiddenStatusTypes.filter((t) => t !== type)
+                  : [...hiddenStatusTypes, type],
+              })
+            }
+          />
+        ))}
+      </Group>
       <NativeButton
         label="Reset to default"
         variant="outlined"
-        disabled={isDefaultLayout(layout)}
-        onPress={() => set(DEFAULT_START_LAYOUT)}
+        disabled={isDefaultLayout(homeLayout) && hiddenStatusTypes.length === 0}
+        onPress={() => update({ homeLayout: DEFAULT_HOME_LAYOUT, hiddenStatusTypes: [] })}
       />
     </>
   )

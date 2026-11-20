@@ -2,33 +2,51 @@
 // (the dashboard keeps its equivalents in the kiosk's browser storage, which nothing remote can
 // reach), apart from everything shared on the bus, which Settings changes for every client.
 
-/** The widgets the Start tab can show, in their shipped order. */
-export const START_WIDGET_IDS = [
-  'temperature',
-  'map',
-  'power-flow',
-  'battery',
-  'heater',
-  'solar',
-  'tilt',
-  'fresh-water',
-  'grey-water',
-] as const
-export type StartWidgetId = (typeof START_WIDGET_IDS)[number]
+import { ENTITY_TYPES, type EntityType } from '@/lib/drivers'
+import { DEFAULT_WIDGET_IDS, WIDGETS, type WidgetId } from '@/lib/widgets'
 
-export const START_WIDGET_LABELS: Record<StartWidgetId, string> = {
-  temperature: 'Temperature',
-  map: 'Map',
-  'power-flow': 'Power flow',
-  battery: 'Battery',
-  heater: 'Heater',
-  solar: 'Solar production',
-  tilt: 'Tilt',
-  'fresh-water': 'Fresh water',
-  'grey-water': 'Grey water',
+/** Home's widgets, in their shipped order. */
+export const WIDGET_IDS: readonly WidgetId[] = WIDGETS.map((w) => w.id)
+export const WIDGET_LABELS = Object.fromEntries(WIDGETS.map((w) => [w.id, w.label])) as Record<
+  WidgetId,
+  string
+>
+
+/**
+ * This phone's Home: every widget it has seen, in order, and the ones it hid. A widget in neither
+ * (new in a release) is placed at its default position and shown only if it is on by default.
+ * Availability is never stored: a type the van lacks is filtered at render time.
+ */
+export interface HomeLayout {
+  order: readonly WidgetId[]
+  hidden: readonly WidgetId[]
 }
 
-export const DEFAULT_START_LAYOUT: readonly StartWidgetId[] = START_WIDGET_IDS
+export const DEFAULT_HOME_LAYOUT: HomeLayout = {
+  order: WIDGET_IDS,
+  hidden: WIDGETS.filter((w) => !w.defaultOn).map((w) => w.id),
+}
+
+/** The widgets Home shows, in order. */
+export function shownWidgets(layout: HomeLayout): readonly WidgetId[] {
+  const order = [...layout.order]
+  WIDGET_IDS.forEach((id, index) => {
+    if (order.includes(id) || layout.hidden.includes(id)) return
+    if (!DEFAULT_WIDGET_IDS.includes(id)) return
+    // After the nearest widget before it in the catalogue that is already placed, else first.
+    const before = WIDGET_IDS.slice(0, index)
+      .reverse()
+      .find((w) => order.includes(w))
+    order.splice(before === undefined ? 0 : order.indexOf(before) + 1, 0, id)
+  })
+  return order.filter((id) => !layout.hidden.includes(id))
+}
+
+/** The layout that shows `shown`, in that order, and hides every other widget. */
+export function homeLayoutOf(shown: readonly WidgetId[]): HomeLayout {
+  const hidden = WIDGET_IDS.filter((id) => !shown.includes(id))
+  return { order: [...shown, ...hidden], hidden }
+}
 
 export type ThemeChoice = 'system' | 'light' | 'dark'
 export type DevicesSort = 'driver' | 'entity'
@@ -93,8 +111,9 @@ export const VAN_LABELS: Record<keyof Van, string> = {
 export interface Preferences {
   /** Light, dark, or whatever the phone is set to. */
   theme: ThemeChoice
-  /** The Start tab's widgets, in order; one not listed is not shown. */
-  startLayout: readonly StartWidgetId[]
+  homeLayout: HomeLayout
+  /** Entity types whose status circle Home leaves out. */
+  hiddenStatusTypes: readonly EntityType[]
   /** Temperature sensor ids the Climate tab leaves out. */
   hiddenTemperatures: readonly string[]
   /** How Settings › Devices lists them. */
@@ -108,7 +127,8 @@ export interface Preferences {
 
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
-  startLayout: DEFAULT_START_LAYOUT,
+  homeLayout: DEFAULT_HOME_LAYOUT,
+  hiddenStatusTypes: [],
   hiddenTemperatures: [],
   devicesSort: 'driver',
   powerLayout: 'van-tiles',
@@ -116,13 +136,12 @@ export const DEFAULT_PREFERENCES: Preferences = {
   van: { name: '', brand: '', model: '', kms: '', plate: '', color: '' },
 }
 
-function isWidgetId(value: unknown): value is StartWidgetId {
-  return START_WIDGET_IDS.some((id) => id === value)
+function isWidgetId(value: unknown): value is WidgetId {
+  return WIDGET_IDS.some((id) => id === value)
 }
 
-/** The widget `'energy'` is now `'power-flow'`; a layout stored before the rename keeps it. */
-function renamedWidget(value: unknown): unknown {
-  return value === 'energy' ? 'power-flow' : value
+function widgetIds(value: unknown): WidgetId[] {
+  return Array.isArray(value) ? [...new Set(value.filter(isWidgetId))] : []
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -148,10 +167,19 @@ export function parsePreferences(raw: string | null): Preferences {
       stored.theme === 'light' || stored.theme === 'dark' || stored.theme === 'system'
         ? stored.theme
         : DEFAULT_PREFERENCES.theme,
-    // An empty layout is a choice (no widgets), so only a missing or malformed one is defaulted.
-    startLayout: Array.isArray(stored.startLayout)
-      ? [...new Set(stored.startLayout.map(renamedWidget).filter(isWidgetId))]
-      : DEFAULT_START_LAYOUT,
+    // The old `startLayout` is discarded: its widgets are not these.
+    homeLayout: isRecord(stored.homeLayout)
+      ? { order: widgetIds(stored.homeLayout.order), hidden: widgetIds(stored.homeLayout.hidden) }
+      : DEFAULT_HOME_LAYOUT,
+    hiddenStatusTypes: Array.isArray(stored.hiddenStatusTypes)
+      ? [
+          ...new Set(
+            stored.hiddenStatusTypes.filter((t): t is EntityType =>
+              ENTITY_TYPES.some((e) => e.type === t),
+            ),
+          ),
+        ]
+      : [],
     hiddenTemperatures: Array.isArray(stored.hiddenTemperatures)
       ? [...new Set(stored.hiddenTemperatures.filter((id) => typeof id === 'string'))]
       : [],
@@ -180,30 +208,31 @@ export function moved<T>(list: readonly T[], from: number, to: number): readonly
 }
 
 /** The Widgets screen's slots: the shown widgets in order, a divider, then the hidden ones as shipped. */
-export function widgetSlots(layout: readonly StartWidgetId[]): (StartWidgetId | 'divider')[] {
-  return [...layout, 'divider', ...START_WIDGET_IDS.filter((id) => !layout.includes(id))]
+export function widgetSlots(shown: readonly WidgetId[]): (WidgetId | 'divider')[] {
+  return [...shown, 'divider', ...WIDGET_IDS.filter((id) => !shown.includes(id))]
 }
 
 /**
- * The layout after the widget in slot `from` is dropped on slot `to`: whatever lands above the
- * divider is shown, in that order. The same `layout` when nothing changes (the divider cannot be
+ * The shown widgets after the widget in slot `from` is dropped on slot `to`: whatever lands above
+ * the divider is shown, in that order. The same `shown` when nothing changes (the divider cannot be
  * dragged, and the hidden widgets have no order of their own).
  */
 export function layoutAfterDrop(
-  layout: readonly StartWidgetId[],
+  shown: readonly WidgetId[],
   from: number,
   to: number,
-): readonly StartWidgetId[] {
-  const slots = widgetSlots(layout)
-  if (slots[from] === 'divider') return layout
+): readonly WidgetId[] {
+  const slots = widgetSlots(shown)
+  if (slots[from] === 'divider') return shown
   const next = moved(slots, from, to)
-  const shown = next.slice(0, next.indexOf('divider')) as StartWidgetId[]
-  return shown.length === layout.length && shown.every((id, i) => id === layout[i]) ? layout : shown
+  const after = next.slice(0, next.indexOf('divider')) as WidgetId[]
+  return after.length === shown.length && after.every((id, i) => id === shown[i]) ? shown : after
 }
 
-export function isDefaultLayout(layout: readonly StartWidgetId[]): boolean {
+export function isDefaultLayout(layout: HomeLayout): boolean {
+  const shown = shownWidgets(layout)
   return (
-    layout.length === DEFAULT_START_LAYOUT.length &&
-    layout.every((id, i) => id === DEFAULT_START_LAYOUT[i])
+    shown.length === DEFAULT_WIDGET_IDS.length &&
+    shown.every((id, i) => id === DEFAULT_WIDGET_IDS[i])
   )
 }
