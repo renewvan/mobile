@@ -152,7 +152,7 @@ export function DevicesView() {
   const unsupported = settled ? unsupportedDrivers(state) : []
 
   if (drivers.length === 0) {
-    return <Empty>No drivers connected. Waiting for the renewvan hub.</Empty>
+    return <Empty>No drivers connected. Waiting for the Renewvan hub.</Empty>
   }
 
   const labelOf = (type: string, id: string): string => {
@@ -321,7 +321,7 @@ export function DriverInfoView({ id }: { id: string }) {
         {info?.ip !== undefined && <DetailRow label="IP address" value={info.ip} />}
         <DetailRow
           label="Manufacturer"
-          value={info === undefined ? null : (info.manufacturer ?? 'renewvan')}
+          value={info === undefined ? null : (info.manufacturer ?? 'Renewvan')}
         />
         <DetailRow label="Homepage" value={info?.homepage ?? null} />
       </DetailList>

@@ -46,7 +46,7 @@ export function LogoSymbol({ size = 28 }: { size?: number }) {
 export function LogoLockup({ size = 28 }: { size?: number }) {
   const { colors } = useTheme()
   return (
-    <View accessibilityRole="header" accessibilityLabel="renewvan" style={styles.lockup}>
+    <View accessibilityRole="header" accessibilityLabel="Renewvan" style={styles.lockup}>
       <LogoSymbol size={size} />
       <Text style={[styles.word, { color: colors.foreground, fontSize: size * 0.72 }]}>
         renew<Text style={{ color: BLUE }}>van</Text>

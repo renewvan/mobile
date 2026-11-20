@@ -1,6 +1,6 @@
-# renewvan mobile
+# Renewvan mobile
 
-The phone app for a van running the renewvan hub. It shows what the hub's drivers publish and sends commands back. Entities, drivers and the bus are defined in `../hub/CONTEXT.md`; this file only adds what is specific to the app.
+The phone app for a van running the Renewvan hub. It shows what the hub's drivers publish and sends commands back. Entities, drivers and the bus are defined in `../hub/CONTEXT.md`; this file only adds what is specific to the app.
 
 ## Language
 

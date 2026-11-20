@@ -127,7 +127,7 @@ export function AlertsView() {
         </Box>
         {blocked && (
           <Note tone="danger">
-            Notifications are blocked for renewvan. Allow them in the phone&apos;s app settings,
+            Notifications are blocked for Renewvan. Allow them in the phone&apos;s app settings,
             then switch this on again.
           </Note>
         )}
@@ -565,7 +565,7 @@ export function AboutView() {
   return (
     <>
       <DetailList>
-        <DetailRow label="App" value="renewvan" />
+        <DetailRow label="App" value="Renewvan" />
         <DetailRow label="Version" value={Constants.expoConfig?.version ?? null} />
         <DetailRow
           label="Update"
@@ -596,7 +596,7 @@ export function AboutView() {
         <Note>{message ?? 'An update is available.'}</Note>
       ) : null}
       <Note>
-        The phone companion to the renewvan dashboard. It reads the same bus, shows the same van and
+        The phone companion to the Renewvan dashboard. It reads the same bus, shows the same van and
         sends the same commands; what a reading means is decided by the dashboard&apos;s own logic.
       </Note>
     </>

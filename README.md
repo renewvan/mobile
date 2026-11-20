@@ -1,6 +1,6 @@
 # mobile
 
-The renewvan phone app: the same live view and controls as `renewvan/dashboard`, as a native
+The Renewvan phone app: the same live view and controls as `renewvan/dashboard`, as a native
 Android app (Expo / React Native). It shows the van's power, tanks, temperatures and tilt, switches
 relays and runs the heater, from the van's own network or over Tailscale.
 
@@ -19,7 +19,7 @@ design (every control has a plain React Native fallback), but iOS has not been r
 ## What it does
 
 Five tabs in one flat bar drawn by the app (`src/components/TabBar.tsx`, ADR 0004), with a raised
-Home button in the centre. The renewvan logo is on the left of each tab's header, the Alerts bell
+Home button in the centre. The Renewvan logo is on the left of each tab's header, the Alerts bell
 (red dot while an alert is open) on the right:
 
 | Tab      | Content                                                                                                                                                                                      |
