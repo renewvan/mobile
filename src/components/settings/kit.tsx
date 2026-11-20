@@ -180,12 +180,15 @@ export function NavRow({
   dim,
   attention,
   badge,
+  badgeLabel,
   onPress,
 }: {
   icon?: ReactNode
   label: string
   description?: string
+  /** A short chip after the label; `badgeLabel` is its longer spoken form. */
   badge?: string
+  badgeLabel?: string
   /** A status dot before the description: a Driver's health. */
   tone?: StatusTone
   /** Greyed: an offline Driver. */
@@ -198,7 +201,7 @@ export function NavRow({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[label, description, badge, attention && 'needs attention']
+      accessibilityLabel={[label, description, badgeLabel ?? badge, attention && 'needs attention']
         .filter(Boolean)
         .join(', ')}
       android_ripple={{ color: colors.default }}

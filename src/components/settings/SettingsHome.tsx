@@ -127,7 +127,7 @@ export function SettingsHome() {
         <NavRow
           icon={<Repeat2 {...icon} />}
           label="Automation"
-          description="Scenes and automation"
+          description="Not available yet"
           onPress={() => openSettings('automation')}
         />
       </Group>

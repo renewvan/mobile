@@ -48,24 +48,41 @@ export function homeLayoutOf(shown: readonly WidgetId[]): HomeLayout {
   return { order: [...shown, ...hidden], hidden }
 }
 
-/** Applies an edit of the available widgets without changing any unavailable one's saved state. */
+/**
+ * Applies an edit of the listed widgets (`available`) without dropping the others. Each unlisted shown
+ * widget stays next to the nearest listed neighbour that is still shown: before the next one it
+ * preceded, else after the previous one it trailed.
+ */
 export function homeLayoutWithAvailable(
   current: HomeLayout,
   available: readonly WidgetId[],
   shown: readonly WidgetId[],
 ): HomeLayout {
   const before = shownWidgets(current)
-  const replacements = [...shown, ...available.filter((id) => !shown.includes(id))]
-  let index = 0
-  const order = widgetSlots(before).flatMap((id) =>
-    id === 'divider' ? [] : available.includes(id) ? [replacements[index++]] : [id],
-  )
-  return {
-    order,
-    hidden: WIDGET_IDS.filter((id) =>
-      available.includes(id) ? !shown.includes(id) : !before.includes(id),
-    ),
-  }
+  const listed = before.filter((id) => available.includes(id))
+  const lead: WidgetId[] = []
+  const ahead = new Map<WidgetId, WidgetId[]>()
+  const behind = new Map<WidgetId, WidgetId[]>()
+  const put = (map: Map<WidgetId, WidgetId[]>, key: WidgetId, id: WidgetId) =>
+    map.set(key, [...(map.get(key) ?? []), id])
+  before.forEach((id, index) => {
+    if (available.includes(id)) return
+    const around = (ids: readonly WidgetId[]) => ids.find((w) => shown.includes(w))
+    const next = around(before.slice(index + 1).filter((w) => listed.includes(w)))
+    const prev = around(
+      before
+        .slice(0, index)
+        .filter((w) => listed.includes(w))
+        .reverse(),
+    )
+    if (next) put(ahead, next, id)
+    else if (prev) put(behind, prev, id)
+    else lead.push(id)
+  })
+  return homeLayoutOf([
+    ...lead,
+    ...shown.flatMap((id) => [...(ahead.get(id) ?? []), id, ...(behind.get(id) ?? [])]),
+  ])
 }
 
 export type ThemeChoice = 'system' | 'light' | 'dark'

@@ -116,7 +116,7 @@ describe('homeLayoutWithAvailable', () => {
       ['status', 'map', 'group-energy'],
       ['map', 'group-energy', 'status'],
     )
-    expect(shownWidgets(next)).toEqual(['group-water', 'map', 'group-energy', 'heater', 'status'])
+    expect(shownWidgets(next)).toEqual(['map', 'heater', 'group-energy', 'group-water', 'status'])
 
     const hiddenUnavailable = homeLayoutWithAvailable(
       homeLayoutOf(['status']),
@@ -124,6 +124,26 @@ describe('homeLayoutWithAvailable', () => {
       ['status'],
     )
     expect(shownWidgets(hiddenUnavailable)).toEqual(['status'])
+  })
+})
+
+describe('homeLayoutWithAvailable, unavailable neighbours', () => {
+  it('keeps an unavailable widget before the available one it preceded when the first is hidden', () => {
+    const next = homeLayoutWithAvailable(
+      homeLayoutOf(['status', 'group-water', 'map']),
+      ['status', 'map'],
+      ['map'],
+    )
+    expect(shownWidgets(next)).toEqual(['group-water', 'map'])
+  })
+
+  it('keeps it after the available one it trailed when that one moves', () => {
+    const next = homeLayoutWithAvailable(
+      homeLayoutOf(['status', 'map', 'group-water']),
+      ['status', 'map'],
+      ['map', 'status'],
+    )
+    expect(shownWidgets(next)).toEqual(['map', 'group-water', 'status'])
   })
 })
 

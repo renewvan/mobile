@@ -193,20 +193,24 @@ export function PowerPageView() {
 export function WidgetsView() {
   const { homeLayout, hiddenStatusTypes, update } = usePreferences()
   const capabilities = useCapabilities()
-  const available = WIDGET_IDS.filter((id) => widgetAvailability(id, capabilities) === 'available')
-  const shown = shownWidgets(homeLayout).filter((id) => available.includes(id))
-  const unavailable = WIDGET_IDS.length - available.length
+  // Loading widgets stay listed; only those the van has no device for are left out.
+  const listed = WIDGET_IDS.filter((id) => widgetAvailability(id, capabilities) !== 'unavailable')
+  const shown = shownWidgets(homeLayout).filter((id) => listed.includes(id))
+  const unavailable = WIDGET_IDS.length - listed.length
   const set = (next: readonly (typeof shown)[number][]) =>
-    update({ homeLayout: homeLayoutWithAvailable(homeLayout, available, next) })
+    update({ homeLayout: homeLayoutWithAvailable(homeLayout, listed, next) })
   return (
     <>
       <Note>
         Choose what Home shows. Hold a grip and drag to reorder; drop a widget above the line to
         show it, below to hide it. A widget the van has no device for stays out of sight.
       </Note>
-      <WidgetList layout={shown} widgets={available} onChange={set} />
+      <WidgetList layout={shown} widgets={listed} onChange={set} />
       {unavailable > 0 && (
-        <Note>{unavailable} more widgets appear when their devices are installed</Note>
+        <Note>
+          {unavailable === 1 ? '1 more widget appears' : `${unavailable} more widgets appear`} when
+          their devices are installed
+        </Note>
       )}
       <Group
         title="Status circles"

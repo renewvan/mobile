@@ -117,6 +117,7 @@ const byName = (a: string, b: string) => a.localeCompare(b, undefined, { sensiti
 const byNumericId = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true })
 
 const NOT_SUPPORTED = 'Not supported by this app version'
+const NOT_SUPPORTED_CHIP = 'Not supported'
 
 function unsupportedDetail({ kind, types }: UnsupportedDriver): string {
   return kind === 'unsupported'
@@ -213,7 +214,8 @@ export function DevicesView() {
               key={row.key}
               label={row.name}
               description={describeDriver(row)}
-              badge={unsupported.some((u) => u.key === row.key) ? NOT_SUPPORTED : undefined}
+              badge={unsupported.some((u) => u.key === row.key) ? NOT_SUPPORTED_CHIP : undefined}
+              badgeLabel={NOT_SUPPORTED}
               tone={TONE[row.tone]}
               dim={row.dim}
               onPress={() => openSettings('driver', row.key)}
@@ -687,8 +689,8 @@ export function PrimaryBatteryView() {
         </Note>
       )}
       <Note>
-        The battery the Power tab, the Start tab and the dashboard read. It is one choice shared by
-        every screen of this van.
+        The battery Energy, Home and the dashboard read. It is one choice shared by every screen of
+        this van.
       </Note>
     </>
   )

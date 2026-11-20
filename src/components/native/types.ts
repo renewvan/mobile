@@ -19,6 +19,8 @@ export interface SegmentedProps<T extends string> {
 
 export interface NativeButtonProps {
   label: string
+  /** Spoken instead of `label` when the visible text is too short to say what the button does. */
+  accessibilityLabel?: string
   onPress: () => void
   disabled?: boolean
   variant?: 'filled' | 'danger' | 'outlined' | 'text'
