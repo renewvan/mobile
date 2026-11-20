@@ -4,6 +4,7 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native'
 import Svg, { Defs, G, Mask, Path } from 'react-native-svg'
 import { PULSE_PAUSE_S, pulseSeconds } from '@/components/power/flowModel'
 import { useReduceMotion } from '@/components/power/PowerFlow'
+import { SourceLabel } from '@/components/power/SourceLabel'
 import { MutedIcon, NoData, TitledCard, tabular } from '@/components/ui'
 import { alpha, useTheme } from '@/theme'
 import { batteryDial, type BatteryDialView } from './batteryDial'
@@ -233,13 +234,7 @@ export function BatteryCard({
     <TitledCard
       icon={<MutedIcon icon={CarBattery} />}
       title="Battery"
-      right={
-        view?.source ? (
-          <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12, flexShrink: 1 }}>
-            {view.source}
-          </Text>
-        ) : undefined
-      }
+      right={<SourceLabel name={view?.source} />}
       contentStyle={styles.center}
     >
       {view ? (
