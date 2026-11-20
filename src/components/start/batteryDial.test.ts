@@ -11,6 +11,13 @@ const battery = (o: Partial<Battery> = {}): Battery => ({
 })
 
 describe('batteryDial', () => {
+  it('names the source when it publishes a name', () => {
+    expect(batteryDial({ a: battery({ name: ' SmartShunt 500A ' }) }, colors)?.source).toBe(
+      'SmartShunt 500A',
+    )
+    expect(batteryDial({ a: battery() }, colors)?.source).toBeUndefined()
+  })
+
   it('has nothing until a battery is complete', () => {
     expect(batteryDial({}, colors)).toBeUndefined()
     expect(batteryDial({ a: { soc_pct: 50 } }, colors)).toBeUndefined()
