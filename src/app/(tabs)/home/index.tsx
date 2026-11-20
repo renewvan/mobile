@@ -15,6 +15,8 @@ import { NativeButton } from '@/components/native'
 import { flowFromBus } from '@/components/power/flowModel'
 import { PowerFlow } from '@/components/power/PowerFlow'
 import { SOLAR_HISTORY_DAYS, SolarCard } from '@/components/power/SolarCard'
+import { SourceLabel } from '@/components/power/SourceLabel'
+import { batterySourceName } from '@/components/power/sourceName'
 import { Screen } from '@/components/Screen'
 import { openSettings } from '@/components/settings/routes'
 import { BatteryCard } from '@/components/start/BatteryCard'
@@ -139,6 +141,7 @@ export default function StartTab() {
           <TitledCard
             icon={<MutedIcon icon={Waypoints} />}
             title="Power flow"
+            right={<SourceLabel name={batterySourceName(batteries, choice)} />}
             contentStyle={powerLayout === 'van-orbs' ? ORBS_CONTENT : undefined}
           >
             {flow.nodes.battery.present ? (
@@ -208,7 +211,7 @@ export default function StartTab() {
       case 'map':
         return [colors]
       case 'power-flow':
-        return [colors, flow, powerLayout]
+        return [colors, flow, powerLayout, batteries, choice]
       case 'battery':
         return [colors, batteries, choice]
       case 'heater':

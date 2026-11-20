@@ -1,17 +1,17 @@
 import { Sun, Zap } from 'lucide-react-native'
 import { useMemo } from 'react'
-import { Text } from 'react-native'
 import { useRenewvanBus } from '@/bus/RenewvanBusProvider'
 import { ChargerCard } from '@/components/power/ChargerCard'
 import { flowFromBus } from '@/components/power/flowModel'
 import { energySections } from '@/components/power/sections'
 import { PowerFlow } from '@/components/power/PowerFlow'
 import { SOLAR_HISTORY_DAYS, SolarCard } from '@/components/power/SolarCard'
+import { SourceLabel } from '@/components/power/SourceLabel'
+import { batterySourceName } from '@/components/power/sourceName'
 import { Screen } from '@/components/Screen'
 import { EmptyState, NoData, TitledCard } from '@/components/ui'
 import { useCapabilities } from '@/hooks/useCapabilities'
 import { useFirstSolarWithHistory } from '@/hooks/useSolarYieldHistory'
-import { completeBatteryIds, primaryBattery } from '@/lib/primaryBattery'
 import { usePreferences } from '@/preferences/PreferencesProvider'
 import { useTheme } from '@/theme'
 
@@ -38,9 +38,6 @@ export default function PowerTab() {
     () => flowFromBus(batteries, solar, chargers, choice),
     [batteries, solar, chargers, choice],
   )
-  const primary = primaryBattery(batteries, choice)
-  // With more than one battery, say which one the diagram reads.
-  const namesSource = completeBatteryIds(batteries).length > 1 && primary !== undefined
   const solarRecord = useFirstSolarWithHistory(solar, SOLAR_HISTORY_DAYS)
 
   if (sections.length === 0) {
@@ -62,16 +59,13 @@ export default function PowerTab() {
   return (
     <Screen>
       {hasBattery && (
-        <TitledCard icon={<Zap size={16} color={colors.muted} />} title="Power">
+        <TitledCard
+          icon={<Zap size={16} color={colors.muted} />}
+          title="Power"
+          right={<SourceLabel name={batterySourceName(batteries, choice)} />}
+        >
           {flow.nodes.battery.present ? (
-            <>
-              <PowerFlow flow={flow} layout={powerLayout} />
-              {namesSource && (
-                <Text style={{ color: colors.muted, fontSize: 12, textAlign: 'center' }}>
-                  Battery: {primary.battery.name ?? primary.id}
-                </Text>
-              )}
-            </>
+            <PowerFlow flow={flow} layout={powerLayout} />
           ) : (
             <NoData icon={<Zap size={16} color={colors.muted} />} label="Power" />
           )}
